@@ -8,83 +8,82 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500&family=Inter:wght@400;500&family=JetBrains+Mono&display=swap" rel="stylesheet">
 <style>
 /* VOICE: a night observatory: quiet, exact, one bright line.
-   IDEA: the critical strip of the zeta function, with the line Re(s) = 1/2 lit up.
-   PICTURE: zeros glowing on the critical line; then a three-column "uses / used by" map you click through.
+   IDEA: a star map of the proof: one bright theorem, and the routes down into it.
+   PICTURE: a three-column "uses / used by" map you click through.
    COLOUR and TYPE: ink black ground, zero gold accent, cool teal for links; Space Grotesk titles, Inter text.
-   LAYOUT: hero with the strip, five theorem cards, explorer (map + details), then the numbers. */
+   LAYOUT: hero text, five theorem cards, explorer (map + details), then the numbers. */
 :root{color-scheme:dark;--bg:#0b0b10;--bg2:#13131b;--bg3:#1c1c27;--line:#2a2a38;--ink:#ececf2;--mut:#9a9ab0;--gold:#ffc83d;--teal:#5fd4c8;--r:12px}
 *{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,system-ui,sans-serif;overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.6 Inter,system-ui,sans-serif;overflow-x:clip}
 .band{padding:clamp(28px,4vw,64px) max(5vw,16px)}
 .wrap{max-width:1240px;margin:0 auto}
 h1,h2,h3{font-family:"Space Grotesk",sans-serif;font-weight:500;margin:0}
-h1{font-size:clamp(34px,5.2vw,56px);line-height:1.05;text-wrap:balance}
+h1{font-size:clamp(38px,5.4vw,72px);line-height:1.04;text-wrap:balance}
 h1 em{font-style:normal;color:var(--gold)}
-h2{font-size:clamp(24px,3vw,32px);line-height:1.15;margin-bottom:8px}
-.sub{color:var(--mut);max-width:62ch;margin:14px 0 0}
+h2{font-size:clamp(26px,3vw,38px);line-height:1.15;margin-bottom:8px}
+h3{font-size:24px}
+.sub{color:var(--mut);max-width:62ch;margin:16px 0 0;font-size:clamp(17px,1.4vw,20px)}
 a{color:var(--teal)}
-code{font:14px "JetBrains Mono",monospace;color:var(--teal)}
+code{font:15px "JetBrains Mono",monospace;color:var(--teal)}
 button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:40px;align-items:center}
+.hero h1{max-width:18ch}
 .steps{list-style:none;padding:0;margin:26px 0 0;display:grid;gap:12px}
 .steps li{display:flex;gap:14px;align-items:flex-start}
-.steps b{flex:none;width:28px;height:28px;border-radius:50%;border:1px solid var(--gold);color:var(--gold);display:grid;place-items:center;font:500 14px "Space Grotesk",sans-serif}
-.strip{position:relative;aspect-ratio:1/1.05;max-height:520px;width:100%}
-.strip svg{position:absolute;inset:0;width:100%;height:100%}
-@media(prefers-reduced-motion:no-preference){.z{animation:tw 3.2s ease-in-out infinite}@keyframes tw{50%{opacity:.45}}}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:22px}
+.steps li{font-size:clamp(17px,1.3vw,19px)}
+.steps b{flex:none;width:32px;height:32px;border-radius:50%;border:1px solid var(--gold);color:var(--gold);display:grid;place-items:center;font:500 14px "Space Grotesk",sans-serif}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:22px}
 .card{all:unset;cursor:pointer;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:8px;transition:border-color .15s}
 .card:hover,.card[aria-current=true]{border-color:var(--gold)}
-.card span{font:13px "JetBrains Mono",monospace;color:var(--gold);overflow-wrap:anywhere}
-.card p{margin:0;font-size:15px;line-height:1.45}
+.card span{font:14px "JetBrains Mono",monospace;color:var(--gold);overflow-wrap:anywhere}
+.card p{margin:0;font-size:17px;line-height:1.45}
 .search{position:relative;margin-top:22px}
-.search input{width:100%;font:16px Inter,sans-serif;padding:14px 16px;min-height:48px;border-radius:var(--r);border:1px solid var(--line);background:var(--bg2);color:var(--ink)}
+.search input{width:100%;font:18px Inter,sans-serif;padding:16px 18px;min-height:56px;border-radius:var(--r);border:1px solid var(--line);background:var(--bg2);color:var(--ink)}
 .results{position:absolute;z-index:5;left:0;right:0;top:calc(100% + 6px);background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);max-height:340px;overflow-y:auto;display:none;padding:6px}
-.results button{all:unset;cursor:pointer;display:block;width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;font-size:14px;overflow-wrap:anywhere}
+.results button{all:unset;cursor:pointer;display:block;width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;font-size:16px;overflow-wrap:anywhere}
 .results button:hover,.results button:focus-visible{background:var(--bg3)}
 .results small{color:var(--mut);margin-left:8px}
 .ex{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;margin-top:18px;align-items:start}
 .panel{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:18px}
-.trail{display:flex;flex-wrap:wrap;gap:4px 8px;font-size:13px;color:var(--mut);margin-bottom:12px;align-items:center}
+.trail{display:flex;flex-wrap:wrap;gap:4px 8px;font-size:15px;color:var(--mut);margin-bottom:12px;align-items:center}
 .trail button{all:unset;cursor:pointer;color:var(--teal)}
 .trail button:hover{text-decoration:underline}
-.maphead{display:flex;justify-content:space-between;font-size:13px;color:var(--mut);margin-bottom:6px}
+.maphead{display:flex;justify-content:space-between;font-size:15px;color:var(--mut);margin-bottom:6px}
 #map{width:100%;display:block}
 #map .nd{cursor:pointer}
 #map .nd rect{fill:var(--bg3);stroke:var(--line)}
 #map .nd:hover rect{stroke:var(--teal)}
 #map .me rect{fill:#2b2410;stroke:var(--gold)}
-#map text{font:13px Inter,sans-serif;fill:var(--ink)}
-#map .meta{fill:var(--mut);font-size:11px}
+#map text{font:15px Inter,sans-serif;fill:var(--ink)}
+#map .meta{fill:var(--mut);font-size:13px}
 .cols{display:none;gap:14px}
 .cols h4{margin:0 0 6px;font:500 13px Inter;color:var(--mut)}
-.cols button{all:unset;cursor:pointer;display:block;padding:8px 10px;margin:4px 0;border-radius:8px;background:var(--bg3);font-size:14px;overflow-wrap:anywhere}
+.cols button{all:unset;cursor:pointer;display:block;padding:10px 12px;margin:4px 0;border-radius:8px;background:var(--bg3);font-size:16px;overflow-wrap:anywhere}
 .me-box{border:1px solid var(--gold)!important;background:#2b2410!important}
-.name{font:500 clamp(19px,2.2vw,24px)/1.2 "Space Grotesk",sans-serif;overflow-wrap:anywhere;margin:0 0 10px}
-.kind{display:inline-block;font-size:13px;color:#1a1300;background:var(--gold);border-radius:6px;padding:1px 8px;font-weight:500}
-.kexp{color:var(--mut);font-size:14px;margin-left:6px}
-dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:16px 0;font-size:14px}
-dt{color:var(--gold);font:500 20px "Space Grotesk",sans-serif;text-align:right;font-variant-numeric:tabular-nums}
+.name{font:500 clamp(22px,2.2vw,28px)/1.2 "Space Grotesk",sans-serif;overflow-wrap:anywhere;margin:0 0 10px}
+.kind{display:inline-block;font-size:15px;color:#1a1300;background:var(--gold);border-radius:6px;padding:1px 8px;font-weight:500}
+.kexp{color:var(--mut);font-size:16px;margin-left:6px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:18px 0;font-size:16px}
+dt{color:var(--gold);font:500 26px "Space Grotesk",sans-serif;text-align:right;font-variant-numeric:tabular-nums}
 dd{margin:0;color:var(--mut);align-self:center}
-pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px;margin:8px 0 0;font:13px/1.6 "JetBrains Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow-y:auto}
-.lbl{font-size:13px;color:var(--mut);margin-top:16px}
+pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:14px;margin:8px 0 0;font:15px/1.6 "JetBrains Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow-y:auto}
+.lbl{font-size:15px;color:var(--mut);margin-top:16px}
 .figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:18px;margin-top:22px}
 .figs div{border-top:1px solid var(--line);padding-top:12px}
-.figs b{display:block;font:500 clamp(28px,3.4vw,40px)/1.1 "Space Grotesk",sans-serif;color:var(--gold);white-space:nowrap}
-.figs span{color:var(--mut);font-size:14px}
+.figs b{display:block;font:500 clamp(32px,3.6vw,48px)/1.1 "Space Grotesk",sans-serif;color:var(--gold);white-space:nowrap}
+.figs span{color:var(--mut);font-size:16px}
 .two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;margin-top:40px}
 .fig{position:relative;height:240px;margin-top:12px}
 .fig>svg{position:absolute;inset:0;width:100%;height:100%}
-.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;padding:4px 8px;border-radius:6px;white-space:nowrap;display:none}
-.lib{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) 64px;gap:12px;align-items:center;font-size:14px;margin:9px 0}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:15px;padding:4px 8px;border-radius:6px;white-space:nowrap;display:none}
+.lib{display:grid;grid-template-columns:minmax(0,170px) minmax(0,1fr) 72px;gap:12px;align-items:center;font-size:16px;margin:9px 0}
 .bar{height:12px;background:var(--bg3);border-radius:0 4px 4px 0;position:relative}
 .bar i{position:absolute;inset:0 auto 0 0;background:var(--teal);border-radius:0 4px 4px 0}
 .lib span:last-child{text-align:right;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
-.note{color:var(--mut);font-size:15px;max-width:78ch;padding-left:20px}
+.note{color:var(--mut);font-size:17px;max-width:78ch;padding-left:20px}
 .note li{margin:6px 0}
-footer{color:var(--mut);font-size:14px}
-@media(max-width:900px){.hero{grid-template-columns:minmax(0,1fr)}.strip{max-height:340px;aspect-ratio:1/1}.ex,.two{grid-template-columns:minmax(0,1fr)}}
+footer{color:var(--mut);font-size:16px}
+@media(max-width:900px){.ex,.two{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:640px){#map,.maphead{display:none}.cols{display:grid}}
 </style>
 </head>
@@ -99,7 +98,6 @@ footer{color:var(--mut);font-size:14px}
       <li><b>3</b><span>Click any box to step into it. Each step takes you one level deeper into the proof.</span></li>
     </ol>
   </div>
-  <div class="strip" aria-hidden="true"><svg id="art" viewBox="0 0 400 420"></svg></div>
 </div></header>
 
 <section class="band" style="padding-top:0"><div class="wrap">
@@ -167,25 +165,8 @@ const KIND = {theorem:"a proved statement", lemma:"a proved helper statement", d
   structure:"a bundle of data", class:"an interface (type class)", instance:"an implementation of an interface", inductive:"a type built from cases", opaque:"a sealed definition"};
 let D, N, parent, usedBy;
 
-art();
 fetch("data.json").then(r => r.json()).then(d => { D = d; N = d.nodes; init(); })
   .catch(() => { $("detail").innerHTML = '<p class="sub">Could not load data.json. Open this page through a web server.</p>'; });
-
-function art() {
-  const Z = [14.13,21.02,25.01,30.42,32.94,37.59,40.92,43.33,48.01,49.77,52.97,56.45,59.35,60.83,65.11,67.08,69.55,72.07,75.7,77.14];
-  const y = t => 400 - t * 4.8;
-  let g = `<rect x="70" y="20" width="260" height="380" fill="#13131b"/>
-    <line x1="70" y1="20" x2="70" y2="400" stroke="#2a2a38"/><line x1="330" y1="20" x2="330" y2="400" stroke="#2a2a38"/>
-    <line x1="200" y1="14" x2="200" y2="400" stroke="#ffc83d" stroke-width="1.5" opacity=".9"/>
-    <line x1="200" y1="14" x2="200" y2="400" stroke="#ffc83d" stroke-width="10" opacity=".08"/>
-    <text x="70" y="416" fill="#9a9ab0" font-size="12" text-anchor="middle" font-family="Inter">0</text>
-    <text x="200" y="416" fill="#ffc83d" font-size="12" text-anchor="middle" font-family="Inter">½</text>
-    <text x="330" y="416" fill="#9a9ab0" font-size="12" text-anchor="middle" font-family="Inter">1</text>
-    <text x="342" y="40" fill="#9a9ab0" font-size="12" font-family="Inter">critical</text><text x="342" y="56" fill="#9a9ab0" font-size="12" font-family="Inter">strip</text>`;
-  Z.forEach((t, i) => g += `<circle class="z" style="animation-delay:${(i * .37) % 3}s" cx="200" cy="${y(t)}" r="4.5" fill="#ffc83d"/>`);
-  g += `<text x="208" y="${y(14.13) + 4}" fill="#ececf2" font-size="12" font-family="Inter">first zero, height 14.13</text>`;
-  $("art").innerHTML = g;
-}
 
 function init() {
   const s = D.stats, exact = s.mode === "exact";
@@ -257,7 +238,7 @@ function show(i) {
     </dl>
     <div class="lbl">What it says, in Lean</div>
     <pre>${esc(n.s || (n.l ? "(statement not parsed)" : "(generated by Lean, no source line)"))}</pre>
-    <p style="font-size:14px;margin:12px 0 0"><a href="${gh(n)}" target="_blank" rel="noopener">Open the source on GitHub ↗</a></p>`;
+    <p style="margin:14px 0 0"><a href="${gh(n)}" target="_blank" rel="noopener">Open the source on GitHub ↗</a></p>`;
   map(i);
 }
 
@@ -272,28 +253,28 @@ function map(i) {
 
   const svg = $("map"), W = svg.parentElement.clientWidth - 36;
   if (W < 300) return;
-  const rowH = 34, rows = Math.max(L.length + (moreL > 0), R.length + (moreR > 0), 3), H = rows * rowH + 10;
+  const rowH = 40, rows = Math.max(L.length + (moreL > 0), R.length + (moreR > 0), 3), H = rows * rowH + 10;
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.style.height = H + "px";
-  const cw = Math.min(250, (W - 60) * 0.34), cx = W / 2, mw = Math.min(260, W - 2 * cw - 60), cy = H / 2;
-  const fit = (s, w) => { const m = Math.floor((w - 20) / 7.2), p = s.split(".");
+  const cw = Math.min(280, (W - 60) * 0.34), cx = W / 2, mw = Math.min(280, W - 2 * cw - 60), cy = H / 2;
+  const fit = (s, w) => { const m = Math.floor((w - 20) / 8.3), p = s.split(".");
     if (s.length > m && p.length > 2) s = p.slice(-2).join(".");
     return s.length > m ? "…" + s.slice(-(m - 1)) : s; };
   const colY = k => (H - k * rowH) / 2;
   let g = "";
   const node = (c, x, y, w, cls = "") => `<g class="nd ${cls}" data-i="${c}"><title>${esc(N[c].n)} (${N[c].k}, used by ${fmt(N[c].u)})</title>
-    <rect x="${x}" y="${y}" width="${w}" height="${rowH - 8}" rx="7"/><text x="${x + 10}" y="${y + 17}">${esc(fit(N[c].n, w))}</text></g>`;
+    <rect x="${x}" y="${y}" width="${w}" height="${rowH - 8}" rx="7"/><text x="${x + 12}" y="${y + 21}">${esc(fit(N[c].n, w))}</text></g>`;
   const link = (x1, y1, x2, y2, col) => `<path d="M${x1} ${y1} C${(x1 + x2) / 2} ${y1},${(x1 + x2) / 2} ${y2},${x2} ${y2}" fill="none" stroke="${col}" stroke-opacity=".45"/>`;
   const ly = colY(L.length + (moreL > 0)), ry = colY(R.length + (moreR > 0));
-  L.forEach((c, k) => { const y = ly + k * rowH; g += link(cw, y + 13, cx - mw / 2, cy, "#9a9ab0"); });
-  R.forEach((c, k) => { const y = ry + k * rowH; g += link(cx + mw / 2, cy, W - cw, y + 13, "#5fd4c8"); });
+  L.forEach((c, k) => { const y = ly + k * rowH; g += link(cw, y + 16, cx - mw / 2, cy, "#9a9ab0"); });
+  R.forEach((c, k) => { const y = ry + k * rowH; g += link(cx + mw / 2, cy, W - cw, y + 16, "#5fd4c8"); });
   L.forEach((c, k) => g += node(c, 0, ly + k * rowH, cw));
   R.forEach((c, k) => g += node(c, W - cw, ry + k * rowH, cw));
-  if (moreL > 0) g += `<text class="meta" x="10" y="${ly + L.length * rowH + 14}">+ ${fmt(moreL)} more use it</text>`;
-  if (moreR > 0) g += `<text class="meta" x="${W - cw + 10}" y="${ry + R.length * rowH + 14}">+ ${fmt(moreR)} more it uses</text>`;
+  if (moreL > 0) g += `<text class="meta" x="10" y="${ly + L.length * rowH + 16}">+ ${fmt(moreL)} more use it</text>`;
+  if (moreR > 0) g += `<text class="meta" x="${W - cw + 10}" y="${ry + R.length * rowH + 16}">+ ${fmt(moreR)} more it uses</text>`;
   if (!L.length) g += `<text class="meta" x="10" y="${cy + 4}">${n.d === 0 ? "nothing: this is the top" : "nothing loaded"}</text>`;
   if (!R.length) g += `<text class="meta" x="${W - cw + 10}" y="${cy + 4}">${n.nc ? "not loaded" : "only Mathlib or Lean basics"}</text>`;
-  g += `<g class="nd me" data-i="${i}"><title>${esc(n.n)}</title><rect x="${cx - mw / 2}" y="${cy - 22}" width="${mw}" height="44" rx="9"/>
-    <text x="${cx}" y="${cy + 5}" text-anchor="middle" style="font-weight:500">${esc(fit(n.n, mw))}</text></g>`;
+  g += `<g class="nd me" data-i="${i}"><title>${esc(n.n)}</title><rect x="${cx - mw / 2}" y="${cy - 25}" width="${mw}" height="50" rx="9"/>
+    <text x="${cx}" y="${cy + 6}" text-anchor="middle" style="font-weight:500">${esc(fit(n.n, mw))}</text></g>`;
   svg.innerHTML = g;
 }
 
