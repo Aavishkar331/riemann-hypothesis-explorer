@@ -4,50 +4,91 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RH proof explorer</title>
+<meta name="description" content="A map of the 17-million-line Lean proof of the Riemann Hypothesis (Alpöge and Claude, November 2026), built from Lean's compiled proof terms.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500&family=Inter:wght@400;500&family=JetBrains+Mono&display=swap" rel="stylesheet">
 <style>
-/* VOICE: a night observatory: quiet, exact, one bright line.
-   IDEA: a star map of the proof: one bright theorem, and the routes down into it.
-   PICTURE: a three-column "uses / used by" map you click through.
-   COLOUR and TYPE: ink black ground, zero gold accent, cool teal for links; Space Grotesk titles, Inter text.
-   LAYOUT: hero text, five theorem cards, explorer (map + details), then the numbers. */
+/* VOICE: a night observatory: quiet, exact, numbers first, one bright accent.
+   IDEA: a survey of a vast proof: its outline, its literature, its roads down.
+   PICTURE: an icicle chart of who owns which part of the proof, then a click-through map.
+   COLOUR and TYPE: ink black ground, zero gold accent, cool teal for structure; Space Grotesk titles, Inter text.
+   LAYOUT: hero numbers, outline, spine, steps, literature, explorer, numbers, method. */
 :root{color-scheme:dark;--bg:#0b0b10;--bg2:#13131b;--bg3:#1c1c27;--line:#2a2a38;--ink:#ececf2;--mut:#9a9ab0;--gold:#ffc83d;--teal:#5fd4c8;--r:12px}
 *{box-sizing:border-box;min-width:0}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
 body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.6 Inter,system-ui,sans-serif;overflow-x:clip}
-.band{padding:clamp(28px,4vw,64px) max(5vw,16px)}
+.band{padding:clamp(40px,6vw,96px) max(5vw,16px)}
 .wrap{max-width:1240px;margin:0 auto}
 h1,h2,h3{font-family:"Space Grotesk",sans-serif;font-weight:500;margin:0}
-h1{font-size:clamp(38px,5.4vw,72px);line-height:1.04;text-wrap:balance}
+h1{font-size:clamp(40px,6vw,78px);line-height:1.02;max-width:16ch;text-wrap:balance}
 h1 em{font-style:normal;color:var(--gold)}
-h2{font-size:clamp(26px,3vw,38px);line-height:1.15;margin-bottom:8px}
-h3{font-size:24px}
-.sub{color:var(--mut);max-width:62ch;margin:16px 0 0;font-size:clamp(17px,1.4vw,20px)}
+h2{font-size:clamp(28px,3.4vw,42px);line-height:1.1;max-width:24ch;text-wrap:balance}
+h3{font-size:22px}
+.kicker{font-size:15px;color:var(--gold);margin-bottom:12px}
+.sub{color:var(--mut);max-width:64ch;margin:16px 0 0;font-size:clamp(17px,1.4vw,20px)}
 a{color:var(--teal)}
-code{font:15px "JetBrains Mono",monospace;color:var(--teal)}
+code{font:15px "JetBrains Mono",monospace;color:var(--teal);overflow-wrap:anywhere}
 button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-.hero h1{max-width:18ch}
-.steps{list-style:none;padding:0;margin:26px 0 0;display:grid;gap:12px}
-.steps li{display:flex;gap:14px;align-items:flex-start}
-.steps li{font-size:clamp(17px,1.3vw,19px)}
-.steps b{flex:none;width:32px;height:32px;border-radius:50%;border:1px solid var(--gold);color:var(--gold);display:grid;place-items:center;font:500 14px "Space Grotesk",sans-serif}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:22px}
-.card{all:unset;cursor:pointer;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:8px;transition:border-color .15s}
-.card:hover,.card[aria-current=true]{border-color:var(--gold)}
-.card span{font:14px "JetBrains Mono",monospace;color:var(--gold);overflow-wrap:anywhere}
-.card p{margin:0;font-size:17px;line-height:1.45}
-.search{position:relative;margin-top:22px}
-.search input{width:100%;font:18px Inter,sans-serif;padding:16px 18px;min-height:56px;border-radius:var(--r);border:1px solid var(--line);background:var(--bg2);color:var(--ink)}
+nav{position:sticky;top:0;z-index:20;background:rgba(11,11,16,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;gap:6px;overflow-x:auto;padding:10px max(5vw,16px);max-width:none}
+nav a{flex:none;color:var(--mut);text-decoration:none;font-size:15px;padding:6px 12px;border-radius:999px}
+nav a:hover,nav a.on{color:var(--ink);background:var(--bg3)}
+nav b{flex:none;font:500 15px "Space Grotesk",sans-serif;color:var(--gold);padding:6px 12px 6px 0}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:24px;margin-top:44px}
+.figs div{border-top:1px solid var(--line);padding-top:14px}
+.figs b{display:block;font:500 clamp(32px,3.4vw,46px)/1.05 "Space Grotesk",sans-serif;color:var(--gold);white-space:nowrap;font-variant-numeric:tabular-nums}
+.figs span{color:var(--mut);font-size:16px}
+.note{font-size:15px;color:var(--mut);margin-top:18px}
+.panel{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+#ice{position:relative;margin-top:30px;border-radius:var(--r);overflow:hidden;background:var(--bg2);border:1px solid var(--line)}
+.cell{position:absolute;border:1px solid var(--bg);border-radius:6px;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:14px;padding:7px 10px;color:#04211e;transform-origin:left center;transition:filter .15s}
+.cell:hover{filter:brightness(1.12)}
+.cell.sel{outline:2px solid var(--gold);outline-offset:-2px}
+.cell small{color:#0b3b36;margin-left:6px}
+.icekey{display:flex;justify-content:space-between;color:var(--mut);font-size:14px;margin-top:10px;gap:10px;flex-wrap:wrap}
+#icePick{margin-top:16px}
+#icePick .nm{font:500 20px "Space Grotesk",sans-serif;overflow-wrap:anywhere}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:var(--bg3);color:var(--ink);cursor:pointer;font-size:16px;text-decoration:none}
+.btn:hover{border-color:var(--teal)}
+.spine{list-style:none;padding:0;margin:34px 0 0;position:relative}
+.spine:before{content:"";position:absolute;left:19px;top:10px;bottom:10px;width:2px;background:linear-gradient(var(--gold),var(--teal))}
+.spine li{position:relative;padding:0 0 30px 60px}
+.spine li:before{content:"";position:absolute;left:12px;top:8px;width:16px;height:16px;border-radius:50%;background:var(--bg);border:2px solid var(--gold)}
+.spine .sn{all:unset;cursor:pointer;font:15px "JetBrains Mono",monospace;color:var(--gold);overflow-wrap:anywhere}
+.spine .sn:hover{text-decoration:underline}
+.spine p{margin:6px 0 0;max-width:70ch}
+.spine .pct{color:var(--mut);font-size:15px;margin-top:4px}
+.ai{display:inline-block;font-size:13px;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:1px 9px;margin-left:6px;vertical-align:2px}
+.steps{display:grid;gap:12px;margin-top:30px}
+.step{display:grid;grid-template-columns:54px minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start;padding:18px 20px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r)}
+.step .num{font:500 30px/1 "Space Grotesk",sans-serif;color:var(--gold)}
+.step .date{font-size:14px;color:var(--mut)}
+.step p{margin:4px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{all:unset;cursor:pointer;font:14px "JetBrains Mono",monospace;background:var(--bg3);border:1px solid var(--line);border-radius:8px;padding:4px 9px;overflow-wrap:anywhere;color:var(--teal)}
+.chip:hover{border-color:var(--teal)}
+.areas{font-size:15px;color:var(--mut);margin-top:8px}
+.areas div{overflow-wrap:anywhere}
+.none{color:var(--mut);font-size:15px}
+.tools{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:28px}
+input[type=search]{flex:1 1 260px;font:18px Inter,sans-serif;padding:14px 16px;min-height:52px;border-radius:var(--r);border:1px solid var(--line);background:var(--bg2);color:var(--ink)}
+table{width:100%;border-collapse:collapse;margin-top:16px;font-size:16px}
+th{text-align:left;color:var(--mut);font-weight:400;font-size:14px;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.lt b{font-weight:500}
+.lt small{display:block;color:var(--mut);font:13px "JetBrains Mono",monospace;overflow-wrap:anywhere}
+.ub{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.ub i{display:block;height:8px;background:var(--teal);border-radius:0 4px 4px 0;min-width:2px}
+.search{position:relative;margin-top:26px}
 .results{position:absolute;z-index:5;left:0;right:0;top:calc(100% + 6px);background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);max-height:340px;overflow-y:auto;display:none;padding:6px}
 .results button{all:unset;cursor:pointer;display:block;width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;font-size:16px;overflow-wrap:anywhere}
-.results button:hover,.results button:focus-visible{background:var(--bg3)}
+.results button:hover{background:var(--bg3)}
 .results small{color:var(--mut);margin-left:8px}
 .ex{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;margin-top:18px;align-items:start}
-.panel{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:18px}
 .trail{display:flex;flex-wrap:wrap;gap:4px 8px;font-size:15px;color:var(--mut);margin-bottom:12px;align-items:center}
 .trail button{all:unset;cursor:pointer;color:var(--teal)}
-.trail button:hover{text-decoration:underline}
 .maphead{display:flex;justify-content:space-between;font-size:15px;color:var(--mut);margin-bottom:6px}
 #map{width:100%;display:block}
 #map .nd{cursor:pointer}
@@ -57,115 +98,148 @@ button{font:inherit;color:inherit}
 #map text{font:15px Inter,sans-serif;fill:var(--ink)}
 #map .meta{fill:var(--mut);font-size:13px}
 .cols{display:none;gap:14px}
-.cols h4{margin:0 0 6px;font:500 13px Inter;color:var(--mut)}
+.cols h4{margin:0 0 6px;font:500 14px Inter;color:var(--mut)}
 .cols button{all:unset;cursor:pointer;display:block;padding:10px 12px;margin:4px 0;border-radius:8px;background:var(--bg3);font-size:16px;overflow-wrap:anywhere}
 .me-box{border:1px solid var(--gold)!important;background:#2b2410!important}
 .name{font:500 clamp(22px,2.2vw,28px)/1.2 "Space Grotesk",sans-serif;overflow-wrap:anywhere;margin:0 0 10px}
 .kind{display:inline-block;font-size:15px;color:#1a1300;background:var(--gold);border-radius:6px;padding:1px 8px;font-weight:500}
 .kexp{color:var(--mut);font-size:16px;margin-left:6px}
 dl{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:18px 0;font-size:16px}
-dt{color:var(--gold);font:500 26px "Space Grotesk",sans-serif;text-align:right;font-variant-numeric:tabular-nums}
+dt{color:var(--gold);font:500 24px "Space Grotesk",sans-serif;text-align:right;font-variant-numeric:tabular-nums}
 dd{margin:0;color:var(--mut);align-self:center}
-pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:14px;margin:8px 0 0;font:15px/1.6 "JetBrains Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow-y:auto}
+pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:14px;margin:8px 0 0;font:14px/1.6 "JetBrains Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow-y:auto}
 .lbl{font-size:15px;color:var(--mut);margin-top:16px}
-.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:18px;margin-top:22px}
-.figs div{border-top:1px solid var(--line);padding-top:12px}
-.figs b{display:block;font:500 clamp(32px,3.6vw,48px)/1.1 "Space Grotesk",sans-serif;color:var(--gold);white-space:nowrap}
-.figs span{color:var(--mut);font-size:16px}
-.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;margin-top:40px}
-.fig{position:relative;height:240px;margin-top:12px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:44px;margin-top:34px}
+.fig{position:relative;height:250px;margin-top:12px}
 .fig>svg{position:absolute;inset:0;width:100%;height:100%}
-.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:15px;padding:4px 8px;border-radius:6px;white-space:nowrap;display:none}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:15px;padding:4px 8px;border-radius:6px;white-space:nowrap;display:none;z-index:4}
 .lib{display:grid;grid-template-columns:minmax(0,170px) minmax(0,1fr) 72px;gap:12px;align-items:center;font-size:16px;margin:9px 0}
 .bar{height:12px;background:var(--bg3);border-radius:0 4px 4px 0;position:relative}
 .bar i{position:absolute;inset:0 auto 0 0;background:var(--teal);border-radius:0 4px 4px 0}
 .lib span:last-child{text-align:right;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
-.note{color:var(--mut);font-size:17px;max-width:78ch;padding-left:20px}
-.note li{margin:6px 0}
-footer{color:var(--mut);font-size:16px}
-@media(max-width:900px){.ex,.two{grid-template-columns:minmax(0,1fr)}}
-@media(max-width:640px){#map,.maphead{display:none}.cols{display:grid}}
+.method{color:var(--mut);font-size:17px;max-width:80ch;padding-left:20px}
+.method li{margin:8px 0}
+footer{color:var(--mut);font-size:16px;border-top:1px solid var(--line)}
+@media(max-width:900px){.ex,.two{grid-template-columns:minmax(0,1fr)}.step{grid-template-columns:44px minmax(0,1fr)}.step>div:last-child{grid-column:2}}
+@media(max-width:640px){#map,.maphead{display:none}.cols{display:grid}table{font-size:15px}.hide-s{display:none}.cell{font-size:13px;padding:6px 7px}}
 </style>
 </head>
 <body>
-<header class="band"><div class="wrap hero">
-  <div>
-    <h1>Explore the machine proof of the <em>Riemann Hypothesis</em></h1>
-    <p class="sub">On 20 November 2026, Levent Alpöge and Claude released a proof of the Riemann Hypothesis written in Lean, a language a computer can check line by line. It runs to 17 million lines, far too much to read. This page turns it into a map you can walk through.</p>
-    <ol class="steps">
-      <li><b>1</b><span>Pick one of the five main theorems below.</span></li>
-      <li><b>2</b><span>The map shows what it is built from (right) and what builds on it (left).</span></li>
-      <li><b>3</b><span>Click any box to step into it. Each step takes you one level deeper into the proof.</span></li>
-    </ol>
-  </div>
+<nav><div class="wrap"><b>RH proof explorer</b>
+  <a href="#outline">Outline</a><a href="#spine">Main line</a><a href="#steps">20 steps</a><a href="#literature">Literature</a><a href="#explore">Explorer</a><a href="#numbers">Numbers</a><a href="#method">Method</a>
+</div></nav>
+
+<header class="band"><div class="wrap">
+  <div class="kicker">Lean proof announced 20 November 2026 by Levent Alpöge, working with Claude</div>
+  <h1 class="reveal">A map of the machine proof of the <em>Riemann Hypothesis</em></h1>
+  <p class="sub reveal">The proof is 17 million lines of Lean, which no one will read line by line. This site reads the compiled proof terms instead and shows how the proof is put together: which results carry it, which published theorems it formalizes, and where the ideas of the announcement live in the code.</p>
+  <div class="figs" id="figs"></div>
+  <p class="note" id="modeNote"></p>
 </div></header>
 
-<section class="band" style="padding-top:0"><div class="wrap">
-  <h2>Start with a main theorem</h2>
-  <div class="cards" id="cards"></div>
+<section class="band" id="outline" style="background:var(--bg2)"><div class="wrap">
+  <div class="kicker">The proof in one picture</div>
+  <h2>Which results carry the proof</h2>
+  <p class="sub">Every bar is a result. Its width is the part of the proof that exists only to prove it: everything below it that nothing else uses. Bars underneath are the pieces inside it. Whatever is left over is shared groundwork used in many places. Click a bar.</p>
+  <div id="ice" role="img" aria-label="Icicle chart of the proof's main results by the share of the proof each one owns"></div>
+  <div class="icekey"><span>← the main theorem owns everything it uses</span><span>width = declarations owned</span></div>
+  <div id="icePick" class="panel"></div>
+</div></section>
 
+<section class="band" id="spine"><div class="wrap">
+  <div class="kicker">The main line</div>
+  <h2>From the Riemann Hypothesis down to the core</h2>
+  <p class="sub">Follow the biggest owner at each level and you get the proof's backbone. Each step is a Lean theorem; the share is how much of the whole proof sits under it alone.</p>
+  <ol class="spine" id="spineList"></ol>
+</div></section>
+
+<section class="band" id="steps" style="background:var(--bg2)"><div class="wrap">
+  <div class="kicker">The announcement, step by step</div>
+  <h2>Where the 20 steps live in the code</h2>
+  <p class="sub">The announcement lists 20 steps. For each, this shows the parts of the proof whose names contain that step's technical terms, and the matching results that own the most. This is name matching, not a verified correspondence: treat it as a place to start reading.</p>
+  <div class="steps" id="stepList"></div>
+</div></section>
+
+<section class="band" id="literature"><div class="wrap">
+  <div class="kicker">Published mathematics inside the proof</div>
+  <h2 id="litTitle">Theorems from the literature, formalized</h2>
+  <p class="sub">The proof states many classical results as named propositions (Local Langlands, Casselman–Wallach, Howe duality…) and then proves them in Lean, since the final theorem assumes nothing. Here they are, with how often the proof leans on each and how large its proof is.</p>
+  <div class="tools"><input type="search" id="litQ" placeholder="Filter, e.g. Langlands, Siegel, Hodge" aria-label="Filter published results"><button class="btn" id="litMore">Show all</button></div>
+  <table class="lt"><thead><tr><th>Result</th><th class="n">Used by</th><th class="n hide-s">Proof size</th><th class="hide-s">Proved by</th></tr></thead><tbody id="litBody"></tbody></table>
+</div></section>
+
+<section class="band" id="explore" style="background:var(--bg2)"><div class="wrap">
+  <div class="kicker">Walk the proof</div>
+  <h2>Pick any result and step through it</h2>
+  <p class="sub">The map shows what the selected result is built from (right) and what builds on it (left). Click any box to step into it.</p>
   <div class="search">
-    <input type="search" id="q" placeholder="Or search any of the loaded declarations by name, e.g. rh_of_every" aria-label="Search declarations" autocomplete="off">
+    <input type="search" id="q" placeholder="Search loaded declarations by name, e.g. thetaLift" aria-label="Search declarations" autocomplete="off" style="width:100%">
     <div class="results" id="results"></div>
   </div>
-
   <div class="ex">
     <div class="panel">
       <div class="trail" id="trail"></div>
       <div class="maphead"><span>← used by</span><span>uses →</span></div>
-      <svg id="map" role="img" aria-label="Map of what the selected declaration uses and what uses it"></svg>
+      <svg id="map" role="img" aria-label="What the selected declaration uses and what uses it"></svg>
       <div class="cols" id="cols"></div>
     </div>
     <div class="panel" id="detail"><p class="sub" style="margin:0">Loading the proof index…</p></div>
   </div>
 </div></section>
 
-<section class="band" style="background:var(--bg2)"><div class="wrap">
-  <h2>The proof in numbers</h2>
-  <div class="figs" id="figs"></div>
+<section class="band" id="numbers"><div class="wrap">
+  <div class="kicker">The proof in numbers</div>
+  <h2>How deep and how wide</h2>
   <div class="two">
     <div>
-      <h3>How deep it goes</h3>
+      <h3>Depth</h3>
       <p class="sub" id="depthSub" style="margin-top:6px"></p>
       <div class="fig" id="depthFig"><svg id="depthSvg" role="img" aria-label="Declarations by depth"></svg><div class="tip" id="tip"></div></div>
     </div>
     <div>
       <h3>Where the code lives</h3>
-      <p class="sub" style="margin-top:6px">Millions of lines per top-level library. The proof's authors named these folders.</p>
+      <p class="sub" style="margin-top:6px">Millions of lines per top-level library, as the authors named them.</p>
       <div id="libs" style="margin-top:12px"></div>
     </div>
   </div>
 </div></section>
 
-<footer class="band"><div class="wrap">
-  <h2 style="font-size:22px">How this map was made</h2>
-  <ul class="note">
-    <li>Every Lean file was read as text to list each declaration with its statement and source line.</li>
-    <li id="edgeNote"></li>
-    <li>To stay fast, the browser loads about 8,000 declarations: the ones nearest the main theorems plus the most reused. Counts like "uses" and "used by" are for the whole proof.</li>
+<footer class="band" id="method"><div class="wrap">
+  <h2 style="font-size:28px">How this was made</h2>
+  <ul class="method">
+    <li>The published compiled proof (Lean 4.33.1, commit <code>40e56bab</code>) was streamed file by file. For every constant, every other constant in its statement or proof term was recorded. This includes what Lean filled in by itself: instances, <code>simp</code> lemmas, automation.</li>
+    <li>Auto-generated helpers (<code>proof_1</code>, <code>match_1</code>, equation lemmas, a structure's fields) are folded into the result they belong to. Results from Mathlib and Lean core are left out.</li>
+    <li>"Owns" comes from a dominator analysis: X owns Y when every chain of uses from the main theorems down to Y passes through X.</li>
+    <li>Plain-English summaries are marked as written by Claude from the Lean statements and names. They are a reading aid; the Lean source is the authority.</li>
     <li>This shows how the proof is put together. It does not check it; Lean's kernel and independent checkers did that.</li>
   </ul>
-  <p id="src"></p>
-  <p>Proof by Levent Alpöge with Claude. Source: the Lean community's <a href="https://github.com/leanprover-community/riemann-hypothesis">riemann-hypothesis</a> repository.</p>
+  <p>Proof by Levent Alpöge with Claude. Source: the Lean community's <a href="https://github.com/leanprover-community/riemann-hypothesis">riemann-hypothesis</a> repository. Code for this site: <a href="https://github.com/Aavishkar331/riemann-hypothesis-explorer">riemann-hypothesis-explorer</a>.</p>
 </div></footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script>
 {
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const fmt = n => n.toLocaleString("en-US");
+const fmt = n => Math.round(n).toLocaleString("en-US");
+const motion = window.gsap && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (motion && window.ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
 const PLAIN = {
   riemannHypothesis: "The Riemann Hypothesis, exactly as Mathlib states it.",
   riemannZeta_eq_zero_re: "Every non-trivial zero of the zeta function has real part ½.",
-  LFunction_ne_zero_of_half_lt_re: "Dirichlet L-functions never vanish to the right of the line Re(s) = ½.",
+  LFunction_ne_zero_of_half_lt_re: "Dirichlet L-functions never vanish to the right of Re(s) = ½.",
   LFunction_eq_zero_re: "GRH: every zero of a Dirichlet L-function in the critical strip lies on Re(s) = ½.",
-  LFunction_eq_zero_re_of_isPrimitive: "The same, stated for primitive Dirichlet characters."
+  LFunction_eq_zero_re_of_isPrimitive: "The same, for primitive Dirichlet characters."
 };
 const KIND = {theorem:"a proved statement", lemma:"a proved helper statement", def:"a definition", abbrev:"a shorthand definition",
-  structure:"a bundle of data", class:"an interface (type class)", instance:"an implementation of an interface", inductive:"a type built from cases", opaque:"a sealed definition"};
-let D, N, parent, usedBy;
+  structure:"a bundle of data", class:"an interface (type class)", instance:"an implementation of an interface", inductive:"a type built from cases"};
+let D, N, I, parent, usedBy, cur = -1;
+const summary = i => PLAIN[N[i].n] || (I && I.summaries[i]) || "";
+const isAI = i => !PLAIN[N[i].n] && I && I.summaries[i];
+const short = s => { const p = s.split("."); return p.length > 2 ? "…" + p.slice(-2).join(".") : s; };
 
-fetch("data.json").then(r => r.json()).then(d => { D = d; N = d.nodes; init(); })
+fetch("data.json").then(r => r.json()).then(d => { D = d; N = d.nodes; I = d.insights; init(); })
   .catch(() => { $("detail").innerHTML = '<p class="sub">Could not load data.json. Open this page through a web server.</p>'; });
 
 function init() {
@@ -177,18 +251,26 @@ function init() {
   D.roots.forEach(r => seen[r] = 1);
   for (let h = 0; h < q.length; h++) for (const c of N[q[h]].c) if (!seen[c]) { seen[c] = 1; parent[c] = q[h]; q.push(c); }
 
-  $("cards").innerHTML = D.roots.map(i => `<button class="card" data-i="${i}"><span>${esc(N[i].n)}</span><p>${PLAIN[N[i].n] || ""}</p></button>`).join("");
-  $("figs").innerHTML = [
-    [(s.lines / 1e6).toFixed(1) + "M", "lines of Lean"], [fmt(s.files), "files"], [fmt(s.decls), "named results and definitions"],
-    [fmt(s.reachable), exact ? "of them used by the main theorems" : "linked by name to the main theorems"], [s.maxDepth, "steps from top to bottom"]
-  ].map(([b, t]) => `<div><b>${b}</b><span>${t}</span></div>`).join("");
-  $("edgeNote").innerHTML = exact
-    ? "Links are exact: they come from Lean's compiled proofs, including everything Lean filled in automatically (instances, <code>simp</code> lemmas, automation)."
-    : "Links here are approximate: one declaration links to another when it mentions it by name. Things Lean fills in automatically (instances, <code>simp</code> lemmas) are missing, so counts are lower bounds. An exact version is being computed.";
-  $("src").innerHTML = `Data from commit <code>${D.commit.slice(0, 8)}</code>.`;
+  const figs = [[s.lines, "lines of Lean", v => (v / 1e6).toFixed(1) + "M"], [s.decls, "named results and definitions", fmt],
+    [s.reachable, exact ? "of them used by the main theorems" : "linked by name to the main theorems", fmt],
+    [s.edges, exact ? "exact dependencies between them" : "name references between them", v => (v / 1e6).toFixed(1) + "M"]];
+  if (I) figs.push([I.litTotal, "published results stated and proved inside", fmt]);
+  $("figs").innerHTML = figs.map(([v, t], k) => `<div><b data-v="${v}" data-k="${k}">0</b><span>${t}</span></div>`).join("");
+  const setFig = (el, v) => el.textContent = figs[+el.dataset.k][2](v);
+  document.querySelectorAll(".figs b").forEach(el => {
+    const v = +el.dataset.v;
+    if (motion) { const o = {x: 0}; gsap.to(o, {x: v, duration: 1.6, ease: "power2.out", delay: .25, onUpdate: () => setFig(el, o.x)}); }
+    else setFig(el, v);
+  });
+  $("modeNote").textContent = exact ? "Every number here comes from Lean's compiled proof terms, so it includes everything Lean filled in automatically."
+    : "These links come from names in the source and miss what Lean filled in automatically.";
+
+  if (I) { icicle(); spine(); steps(); literature(); }
+  else ["outline", "spine", "steps", "literature"].forEach(id => $(id).style.display = "none");
 
   document.addEventListener("click", e => {
-    const b = e.target.closest("[data-i]"); if (b) { go(+b.dataset.i); $("results").style.display = "none"; }
+    const b = e.target.closest("[data-i]");
+    if (b && !b.classList.contains("cell")) { go(+b.dataset.i); $("results").style.display = "none"; }
     else if (!e.target.closest(".search")) $("results").style.display = "none";
   });
   $("q").addEventListener("input", search);
@@ -196,9 +278,109 @@ function init() {
   libs(); depth();
   new ResizeObserver(depth).observe($("depthFig"));
   new ResizeObserver(() => cur >= 0 && map(cur)).observe($("map").parentElement);
-  fromHash();
+  if (I) new ResizeObserver(() => icicle(true)).observe($("ice").parentElement);
+  fromHash(true);
+  animate();
+  // navigation highlight
+  const links = [...document.querySelectorAll("nav a")];
+  const obs = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) links.forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + en.target.id)); }), {rootMargin: "-45% 0px -50% 0px"});
+  document.querySelectorAll("section[id],footer[id]").forEach(s => obs.observe(s));
 }
 
+function animate() {
+  if (!motion) return;
+  gsap.from(".reveal", {y: 26, opacity: 0, duration: .9, stagger: .12, ease: "power3.out"});
+  if (!window.ScrollTrigger) return;
+  document.querySelectorAll("section .kicker, section h2, section > .wrap > .sub").forEach(el =>
+    gsap.from(el, {y: 22, opacity: 0, duration: .7, ease: "power2.out", scrollTrigger: {trigger: el, start: "top 88%", once: true}}));
+  gsap.from(".cell", {scaleX: 0, duration: .9, ease: "power3.out", stagger: {each: .02, from: "start"}, scrollTrigger: {trigger: "#ice", start: "top 80%", once: true}});
+  gsap.utils.toArray(".spine li").forEach(li => gsap.from(li, {x: -24, opacity: 0, duration: .6, ease: "power2.out", scrollTrigger: {trigger: li, start: "top 88%", once: true}}));
+  gsap.from(".spine", {"--grow": 0, duration: 1});
+  gsap.utils.toArray(".step").forEach(el => gsap.from(el, {y: 24, opacity: 0, duration: .55, ease: "power2.out", scrollTrigger: {trigger: el, start: "top 92%", once: true}}));
+  gsap.from("#litBody tr", {opacity: 0, y: 10, duration: .4, stagger: .03, scrollTrigger: {trigger: "#litBody", start: "top 85%", once: true}});
+  gsap.from(".lib .bar i", {scaleX: 0, transformOrigin: "left", duration: 1, stagger: .08, ease: "power3.out", scrollTrigger: {trigger: "#libs", start: "top 85%", once: true}});
+}
+
+/* ---------- icicle: dominator tree near the top ---------- */
+let iceSel = -1;
+function icicle(resize) {
+  const box = $("ice"), W = box.clientWidth, rowH = 40;
+  const O = I.outline.filter(o => o.i >= 0), kids = {};
+  O.forEach(o => (kids[o.p] = kids[o.p] || []).push(o));
+  const rows = Math.max(...O.map(o => o.depth)) + 1;
+  box.style.height = rows * rowH + "px";
+  let html = "";
+  const place = (o, x, w) => {
+    const op = Math.max(.55, 1 - o.depth * .06);
+    html += `<div class="cell${o.i === iceSel ? " sel" : ""}" data-n="${o.i}" style="left:${x}px;top:${o.depth * rowH}px;width:${Math.max(w, 3)}px;height:${rowH - 2}px;background:rgba(95,212,200,${op})" title="${esc(N[o.i].n)}: owns ${fmt(o.owns)}">${w > 90 ? esc(short(N[o.i].n)) + (w > 260 ? `<small>${fmt(o.owns)}</small>` : "") : ""}</div>`;
+    let cx = x;
+    (kids[o.i] || []).sort((a, b) => b.owns - a.owns).forEach(k => { const kw = w * k.owns / o.owns; place(k, cx, kw); cx += kw; });
+  };
+  (kids[-1] || []).forEach(r => place(r, 0, W));
+  box.innerHTML = html;
+  box.onclick = e => { const c = e.target.closest(".cell"); if (c) pickIce(+c.dataset.n); };
+  if (!resize) pickIce(O[0].i);
+}
+function pickIce(i) {
+  iceSel = i;
+  document.querySelectorAll(".cell").forEach(c => c.classList.toggle("sel", +c.dataset.n === i));
+  const o = I.outline.find(o => o.i === i), total = I.outline[0].owns;
+  $("icePick").innerHTML = `<div class="nm">${esc(N[i].n)}</div>
+    <p style="margin:8px 0 0">${esc(summary(i))}${isAI(i) ? '<span class="ai">summary by Claude</span>' : ""}</p>
+    <p class="note" style="margin-top:8px">Owns ${fmt(o.owns)} declarations, ${(100 * o.owns / total).toFixed(1)}% of everything the main theorem uses.</p>
+    <button class="btn" data-i="${i}">Open in the explorer →</button>`;
+  if (motion) gsap.from("#icePick", {opacity: .3, y: 6, duration: .35});
+}
+
+/* ---------- spine ---------- */
+function spine() {
+  const O = I.outline.filter(o => o.i >= 0), total = O[0].owns, chain = [];
+  let node = O[0];
+  while (node) { chain.push(node); const ks = O.filter(o => o.p === node.i).sort((a, b) => b.owns - a.owns); node = ks[0] && ks[0].owns > total * .25 ? ks[0] : null; }
+  const top = D.roots.slice(0, 1).map(i => ({i, owns: total, root: true}));
+  $("spineList").innerHTML = [...top, ...chain].map(o => `<li><button class="sn" data-i="${o.i}">${esc(N[o.i].n)}</button>
+    <p>${esc(summary(o.i))}${isAI(o.i) ? '<span class="ai">summary by Claude</span>' : ""}</p>
+    <div class="pct">${o.root ? "The statement everything serves" : `${(100 * o.owns / total).toFixed(0)}% of the proof sits under this result alone`}</div></li>`).join("");
+}
+
+/* ---------- 20 steps ---------- */
+function steps() {
+  $("stepList").innerHTML = I.steps.map(s => {
+    const tops = s.top.filter(t => t >= 0);
+    const right = s.n === 20 ? `<div class="chips">${tops.map(t => `<button class="chip" data-i="${t}">${esc(N[t].n)}</button>`).join("")}</div><div class="areas">The final statement for every character, from which RH and GRH follow.</div>`
+      : s.count ? `<div class="chips">${tops.map(t => `<button class="chip" data-i="${t}">${esc(short(N[t].n))}</button>`).join("")}</div>
+        <div class="areas">${fmt(s.count)} matching declarations, mostly in:${s.areas.map(([a, c]) => `<div><code>${esc(a.split(".").slice(-2).join("."))}</code> · ${fmt(c)}</div>`).join("")}</div>`
+      : `<div class="none">No part of the code is named after this step's terms.</div>`;
+    return `<div class="step"><div class="num">${s.n}</div><div><div class="date">${s.date} 2026</div><p>${esc(s.text)}</p></div><div>${right}</div></div>`;
+  }).join("");
+}
+
+/* ---------- literature ---------- */
+let litAll = false;
+function literature() {
+  $("litTitle").textContent = `${I.litTotal} theorems from the literature, formalized`;
+  const max = Math.max(...I.literature.map(l => l.usedBy));
+  const draw = () => {
+    const q = $("litQ").value.trim().toLowerCase();
+    let rows = I.literature.filter(l => !q || (l.title + " " + (l.i >= 0 ? N[l.i].n : "")).toLowerCase().includes(q));
+    const shown = q || litAll ? rows : rows.slice(0, 25);
+    $("litBody").innerHTML = shown.map(l => {
+      const pv = l.provers.filter(p => p >= 0)[0];
+      const parts = l.i >= 0 ? N[l.i].n.split(".") : [], t = l.title.length < 9 && parts.length > 1 ? parts[parts.length - 2].replace(/(?<=[a-z])(?=[A-Z])/g, " ") + ": " + l.title : l.title;
+      return `<tr><td><b>${esc(t)}</b><small>${l.i >= 0 ? esc(N[l.i].n) : ""}</small></td>
+        <td class="n"><div class="ub"><i style="width:${Math.max(2, 70 * l.usedBy / max)}px"></i>${fmt(l.usedBy)}</div></td>
+        <td class="n hide-s">${l.proofSize ? fmt(l.proofSize) : "–"}</td>
+        <td class="hide-s">${pv !== undefined ? `<button class="chip" data-i="${pv}">${esc(short(N[pv].n))}</button>` : '<span class="none">inside other proofs</span>'}</td></tr>`;
+    }).join("") || '<tr><td colspan="4" class="none">No result matches.</td></tr>';
+    $("litMore").style.display = q ? "none" : "";
+    $("litMore").textContent = litAll ? "Show top 25" : `Show all ${I.literature.length}`;
+  };
+  $("litQ").addEventListener("input", draw);
+  $("litMore").onclick = () => { litAll = !litAll; draw(); };
+  draw();
+}
+
+/* ---------- explorer ---------- */
 function search() {
   const v = $("q").value.trim().toLowerCase(), r = $("results");
   if (v.length < 2) { r.style.display = "none"; return; }
@@ -208,81 +390,74 @@ function search() {
     : '<p class="sub" style="margin:8px">Nothing among the loaded declarations matches.</p>';
   r.style.display = "block";
 }
-
-let cur = -1;
-function fromHash() { const m = location.hash.match(/^#n(\d+)$/); show(m && +m[1] < N.length ? +m[1] : D.roots[0]); }
-function go(i) {
-  if (location.hash !== "#n" + i) location.hash = "n" + i; else show(i);
-  if (window.scrollY < $("trail").getBoundingClientRect().top + window.scrollY - 300) $("trail").scrollIntoView({behavior: "smooth", block: "start"});
-}
+function fromHash(first) { const m = location.hash.match(/^#n(\d+)$/); show(m && +m[1] < N.length ? +m[1] : D.roots[0]); if (m && first !== true) $("explore").scrollIntoView({behavior: "smooth"}); else if (m) setTimeout(() => $("explore").scrollIntoView(), 50); }
+function go(i) { if (location.hash !== "#n" + i) location.hash = "n" + i; else { show(i); $("explore").scrollIntoView({behavior: "smooth"}); } }
 const gh = n => `https://github.com/leanprover-community/riemann-hypothesis/blob/${D.commit}/src/${n.m.replace(/\./g, "/")}.lean${n.l ? "#L" + n.l : ""}`;
-const short = s => { const p = s.split("."); return p.length > 2 ? "…" + p.slice(-2).join(".") : s; };
 const byUse = (a, b) => N[b].u - N[a].u;
 
 function show(i) {
   cur = i;
   const n = N[i], path = [];
-  for (let p = i; p >= 0; p = parent[p]) path.unshift(p);
-  document.querySelectorAll(".card").forEach(c => c.setAttribute("aria-current", +c.dataset.i === i));
-  $("trail").innerHTML = parent[i] < 0 && n.d !== 0 ? "<span>Not linked to a main theorem among the loaded declarations</span>"
-    : "<span>Path:</span>" + path.map((p, k) => k < path.length - 1 ? `<button data-i="${p}">${esc(short(N[p].n))}</button><span>›</span>` : `<span style="color:var(--gold)">${esc(short(N[p].n))}</span>`).join("");
-  const kexp = KIND[n.k] || "";
+  const up = j => N[j].dm !== undefined ? N[j].dm : parent[j];
+  for (let p = i, k = 0; p >= 0 && k < 80; p = up(p), k++) path.unshift(p);
+  $("trail").innerHTML = path.length < 2 && n.d !== 0 ? "<span>Not linked to a main theorem among the loaded declarations</span>"
+    : `<span title="Every chain of uses from the top down to this result passes through these">${n.dm !== undefined ? "Every route from the top passes through:" : "Path:"}</span>` + path.map((p, k) => k < path.length - 1 ? `<button data-i="${p}">${esc(short(N[p].n))}</button><span>›</span>` : `<span style="color:var(--gold)">${esc(short(N[p].n))}</span>`).join("");
+  const sm = summary(i);
   $("detail").innerHTML = `
     <h3 class="name">${esc(n.n)}</h3>
-    <span class="kind">${n.p ? "private " : ""}${n.k}</span><span class="kexp">${kexp}</span>
-    ${PLAIN[n.n] ? `<p style="margin:12px 0 0">${PLAIN[n.n]}</p>` : ""}
+    <span class="kind">${n.p ? "private " : ""}${n.k}</span><span class="kexp">${KIND[n.k] || ""}</span>
+    ${sm ? `<p style="margin:12px 0 0">${esc(sm)}${isAI(i) ? '<span class="ai">summary by Claude</span>' : ""}</p>` : ""}
     <dl>
-      <dt>${n.d >= 0 ? n.d : "–"}</dt><dd>${n.d === 0 ? "a main theorem (the top of the proof)" : n.d > 0 ? `steps below the main theorems` : "not reached from the main theorems"}</dd>
-      <dt>${fmt(n.nc)}</dt><dd>other parts of the proof it uses</dd>
-      <dt>${fmt(n.u)}</dt><dd>parts of the proof that use it</dd>
+      <dt>${n.d >= 0 ? n.d : "–"}</dt><dd>${n.d === 0 ? "a main theorem (the top of the proof)" : n.d > 0 ? "steps below the main theorems" : "not reached from the main theorems"}</dd>
+      <dt>${fmt(n.nc)}</dt><dd>other parts of the proof it uses directly</dd>
+      <dt>${fmt(n.u)}</dt><dd>parts of the proof that use it directly</dd>
+      ${n.o ? `<dt>${fmt(n.o)}</dt><dd>declarations that exist only to prove it</dd>` : ""}
     </dl>
     <div class="lbl">What it says, in Lean</div>
     <pre>${esc(n.s || (n.l ? "(statement not parsed)" : "(generated by Lean, no source line)"))}</pre>
     <p style="margin:14px 0 0"><a href="${gh(n)}" target="_blank" rel="noopener">Open the source on GitHub ↗</a></p>`;
   map(i);
+  if (motion) gsap.from("#detail > *", {opacity: 0, y: 8, duration: .35, stagger: .03});
 }
 
 function map(i) {
   const n = N[i], MAX = 12;
   const right = [...new Set(n.c)].sort(byUse), left = [...new Set(usedBy[i])].sort(byUse);
-  const R = right.slice(0, MAX), L = left.slice(0, MAX);
-  const moreR = n.nc - R.length, moreL = n.u - L.length;
-  // narrow screens: stacked lists
-  const col = (t, ids, more) => `<div><h4>${t}</h4>${ids.map(c => `<button data-i="${c}">${esc(N[c].n)}</button>`).join("") || '<p class="sub" style="margin:0;font-size:14px">nothing</p>'}${more > 0 ? `<p class="sub" style="font-size:13px;margin:4px 0">+ ${fmt(more)} more</p>` : ""}</div>`;
+  const R = right.slice(0, MAX), L = left.slice(0, MAX), moreR = n.nc - R.length, moreL = n.u - L.length;
+  const col = (t, ids, more) => `<div><h4>${t}</h4>${ids.map(c => `<button data-i="${c}">${esc(N[c].n)}</button>`).join("") || '<p class="sub" style="margin:0;font-size:15px">nothing loaded</p>'}${more > 0 ? `<p class="sub" style="font-size:14px;margin:4px 0">+ ${fmt(more)} more</p>` : ""}</div>`;
   $("cols").innerHTML = col("Used by", L, moreL) + `<div><h4>Selected</h4><button class="me-box" data-i="${i}">${esc(n.n)}</button></div>` + col("Uses", R, moreR);
-
-  const svg = $("map"), W = svg.parentElement.clientWidth - 36;
+  const svg = $("map"), W = svg.parentElement.clientWidth - 40;
   if (W < 300) return;
   const rowH = 40, rows = Math.max(L.length + (moreL > 0), R.length + (moreR > 0), 3), H = rows * rowH + 10;
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.style.height = H + "px";
-  const cw = Math.min(280, (W - 60) * 0.34), cx = W / 2, mw = Math.min(280, W - 2 * cw - 60), cy = H / 2;
-  const fit = (s, w) => { const m = Math.floor((w - 20) / 8.3), p = s.split(".");
-    if (s.length > m && p.length > 2) s = p.slice(-2).join(".");
-    return s.length > m ? "…" + s.slice(-(m - 1)) : s; };
+  const cw = Math.min(280, (W - 60) * .34), cx = W / 2, mw = Math.min(280, W - 2 * cw - 60), cy = H / 2;
+  const fit = (s, w) => { const m = Math.floor((w - 20) / 8.3), p = s.split("."); if (s.length > m && p.length > 2) s = p.slice(-2).join("."); return s.length > m ? "…" + s.slice(-(m - 1)) : s; };
   const colY = k => (H - k * rowH) / 2;
-  let g = "";
-  const node = (c, x, y, w, cls = "") => `<g class="nd ${cls}" data-i="${c}"><title>${esc(N[c].n)} (${N[c].k}, used by ${fmt(N[c].u)})</title>
-    <rect x="${x}" y="${y}" width="${w}" height="${rowH - 8}" rx="7"/><text x="${x + 12}" y="${y + 21}">${esc(fit(N[c].n, w))}</text></g>`;
-  const link = (x1, y1, x2, y2, col) => `<path d="M${x1} ${y1} C${(x1 + x2) / 2} ${y1},${(x1 + x2) / 2} ${y2},${x2} ${y2}" fill="none" stroke="${col}" stroke-opacity=".45"/>`;
+  const node = (c, x, y, w) => `<g class="nd" data-i="${c}"><title>${esc(N[c].n)} (${N[c].k}, used by ${fmt(N[c].u)})</title><rect x="${x}" y="${y}" width="${w}" height="${rowH - 8}" rx="7"/><text x="${x + 12}" y="${y + 21}">${esc(fit(N[c].n, w))}</text></g>`;
+  const link = (x1, y1, x2, y2, c) => `<path class="lk" d="M${x1} ${y1} C${(x1 + x2) / 2} ${y1},${(x1 + x2) / 2} ${y2},${x2} ${y2}" fill="none" stroke="${c}" stroke-opacity=".5"/>`;
   const ly = colY(L.length + (moreL > 0)), ry = colY(R.length + (moreR > 0));
-  L.forEach((c, k) => { const y = ly + k * rowH; g += link(cw, y + 16, cx - mw / 2, cy, "#9a9ab0"); });
-  R.forEach((c, k) => { const y = ry + k * rowH; g += link(cx + mw / 2, cy, W - cw, y + 16, "#5fd4c8"); });
+  let g = "";
+  L.forEach((c, k) => g += link(cw, ly + k * rowH + 16, cx - mw / 2, cy, "#9a9ab0"));
+  R.forEach((c, k) => g += link(cx + mw / 2, cy, W - cw, ry + k * rowH + 16, "#5fd4c8"));
   L.forEach((c, k) => g += node(c, 0, ly + k * rowH, cw));
   R.forEach((c, k) => g += node(c, W - cw, ry + k * rowH, cw));
-  if (moreL > 0) g += `<text class="meta" x="10" y="${ly + L.length * rowH + 16}">+ ${fmt(moreL)} more use it</text>`;
-  if (moreR > 0) g += `<text class="meta" x="${W - cw + 10}" y="${ry + R.length * rowH + 16}">+ ${fmt(moreR)} more it uses</text>`;
-  if (!L.length) g += `<text class="meta" x="10" y="${cy + 4}">${n.d === 0 ? "nothing: this is the top" : "nothing loaded"}</text>`;
-  if (!R.length) g += `<text class="meta" x="${W - cw + 10}" y="${cy + 4}">${n.nc ? "not loaded" : "only Mathlib or Lean basics"}</text>`;
-  g += `<g class="nd me" data-i="${i}"><title>${esc(n.n)}</title><rect x="${cx - mw / 2}" y="${cy - 25}" width="${mw}" height="50" rx="9"/>
-    <text x="${cx}" y="${cy + 6}" text-anchor="middle" style="font-weight:500">${esc(fit(n.n, mw))}</text></g>`;
+  if (moreL > 0) g += `<text class="meta" x="10" y="${ly + L.length * rowH + 16}">+ ${fmt(moreL)} ${L.length ? "more use" : "use"} it (not loaded)</text>`;
+  if (moreR > 0) g += `<text class="meta" x="${W - cw + 10}" y="${ry + R.length * rowH + 16}">+ ${fmt(moreR)} ${R.length ? "more" : ""} it uses (not loaded)</text>`;
+  if (!L.length && !moreL) g += `<text class="meta" x="10" y="${cy + 4}">${n.d === 0 ? "nothing: this is the top" : "nothing loaded"}</text>`;
+  if (!R.length && !moreR) g += `<text class="meta" x="${W - cw + 10}" y="${cy + 4}">only Mathlib or Lean basics</text>`;
+  g += `<g class="nd me" data-i="${i}"><title>${esc(n.n)}</title><rect x="${cx - mw / 2}" y="${cy - 25}" width="${mw}" height="50" rx="9"/><text x="${cx}" y="${cy + 6}" text-anchor="middle" style="font-weight:500">${esc(fit(n.n, mw))}</text></g>`;
   svg.innerHTML = g;
+  if (motion) {
+    svg.querySelectorAll(".lk").forEach(p => { const len = p.getTotalLength(); gsap.fromTo(p, {strokeDasharray: len, strokeDashoffset: len}, {strokeDashoffset: 0, duration: .6, ease: "power2.out"}); });
+    gsap.from(svg.querySelectorAll(".nd:not(.me)"), {opacity: 0, duration: .4, stagger: .02, delay: .15});
+  }
 }
 
+/* ---------- numbers ---------- */
 function libs() {
   const L = D.stats.libs.filter(l => l.decls > 0 && l.lines > 1000), max = Math.max(...L.map(l => l.lines));
-  $("libs").innerHTML = L.map(l => `<div class="lib"><span>${esc(l.a)}</span><div class="bar" title="${fmt(l.lines)} lines, ${fmt(l.decls)} declarations"><i style="width:${100 * l.lines / max}%"></i></div><span>${(l.lines / 1e6).toFixed(2)}M</span></div>`).join("");
+  $("libs").innerHTML = L.map(l => `<div class="lib"><span>${esc(l.a)}</span><div class="bar" title="${fmt(l.lines)} lines, ${fmt(l.reach)} of ${fmt(l.decls)} declarations used by the main theorems"><i style="width:${100 * l.lines / max}%"></i></div><span>${(l.lines / 1e6).toFixed(2)}M</span></div>`).join("");
 }
-
 function depth() {
   if (!D) return;
   const s = $("depthSvg"), W = s.clientWidth, H = s.clientHeight, h = D.stats.depthHist;
@@ -293,12 +468,12 @@ function depth() {
     g += `<rect x="${x + 1}" y="${m.t + ih - bh}" width="${Math.max(1, bw - 2)}" height="${bh}" rx="${Math.min(3, bw / 3)}" fill="${i === peak ? "var(--gold)" : "var(--teal)"}" opacity="${i === peak ? 1 : .75}"/>
       <rect class="hit" data-d="${i}" x="${x}" y="${m.t}" width="${bw}" height="${ih}" fill="transparent"/>`; });
   const step = W < 520 ? 10 : 5;
-  h.forEach((_, i) => { if (i % step === 0) g += `<text x="${m.l + i * bw + bw / 2}" y="${H - 6}" fill="var(--mut)" font-size="12" text-anchor="middle">${i}</text>`; });
+  h.forEach((_, i) => { if (i % step === 0) g += `<text x="${m.l + i * bw + bw / 2}" y="${H - 6}" fill="var(--mut)" font-size="13" text-anchor="middle">${i}</text>`; });
   s.innerHTML = g;
   s.onmousemove = e => { const r = e.target.closest(".hit"), tip = $("tip"); if (!r) { tip.style.display = "none"; return; }
     const d = +r.dataset.d, bx = s.getBoundingClientRect();
     tip.textContent = `${d} steps down: ${fmt(h[d])}`; tip.style.display = "block";
-    tip.style.left = Math.min(e.clientX - bx.left + 10, W - 150) + "px"; tip.style.top = (e.clientY - bx.top - 30) + "px"; };
+    tip.style.left = Math.min(e.clientX - bx.left + 10, W - 170) + "px"; tip.style.top = (e.clientY - bx.top - 30) + "px"; };
   s.onmouseleave = () => $("tip").style.display = "none";
 }
 }

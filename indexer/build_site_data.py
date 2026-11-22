@@ -53,6 +53,23 @@ def main(data, out, commit, max_nodes=8000, roots_names=ROOTS):
     keep = by_level[:max_nodes]
     top_used = [int(i) for i in np.argsort(-used_by)[:300]]
     keep_set = set(keep) | set(top_used)
+    # optional extras from dominators.py and build_insights.py
+    owned = np.load(f"{data}/dom.npz")["owned"] if os.path.exists(f"{data}/dom.npz") else None
+    insights = json.load(open(f"{data}/insights.json", encoding="utf-8")) if os.path.exists(f"{data}/insights.json") else None
+    if insights:
+        want = {o["name"] for o in insights["outline"]} | set(insights["summaries"])
+        for l in insights["literature"]:
+            want.add(l["name"]); want.update(l["provers"])
+        for st in insights["steps"]:
+            want.update(st["top"])
+        keep_set |= {idx[w] for w in want if w in idx}
+    idom = np.load(f"{data}/dom.npz")["idom"] if os.path.exists(f"{data}/dom.npz") else None
+    if idom is not None:
+        # ship every node's chain of dominators, so the site can always show a path to the top
+        for g in list(keep_set):
+            v = int(idom[g])
+            while 0 <= v < N and v not in keep_set:
+                keep_set.add(v); v = int(idom[v])
     keep = sorted(keep_set, key=lambda i: (depth[i] if depth[i] >= 0 else 999, -used_by[i]))
     local = {g: k for k, g in enumerate(keep)}
 
@@ -65,6 +82,8 @@ def main(data, out, commit, max_nodes=8000, roots_names=ROOTS):
             "s": sigs[g][:400], "d": int(depth[g]),
             "c": [local[c] for c in ch if c in local], "nc": int(len(ch)),
             "u": int(used_by[g]),
+            **({"o": int(owned[g])} if owned is not None and owned[g] > 1 else {}),
+            **({"dm": local[int(idom[g])]} if idom is not None and int(idom[g]) in local else {}),
         })
 
     # size per library and per sub-area
@@ -93,7 +112,16 @@ def main(data, out, commit, max_nodes=8000, roots_names=ROOTS):
         "maxDepth": int(depth.max()), "depthHist": depth_hist, "kinds": dict(kind_hist),
         "libs": area_stats(1), "areas": area_stats(2)[:60],
     }
-    doc = {"commit": commit, "roots": [local[r] for r in roots], "stats": stats,
+    if insights:
+        L = lambda n: local.get(idx.get(n, -1), -1)
+        insights = {
+            "outline": [{"i": L(o["name"]), "p": L(o["parent"]) if o["parent"] else -1, "owns": o["owns"], "depth": o["depth"]} for o in insights["outline"]],
+            "literature": [{"i": L(l["name"]), "title": l["title"], "usedBy": l["usedBy"], "provers": [L(p) for p in l["provers"]], "proofSize": l["proofSize"]} for l in insights["literature"]],
+            "steps": [{**{k: v for k, v in st.items() if k != "top"}, "top": [L(t) for t in st["top"]]} for st in insights["steps"]],
+            "summaries": {str(L(k)): v for k, v in insights["summaries"].items() if L(k) >= 0},
+            "litTotal": insights["litTotal"],
+        }
+    doc = {"commit": commit, "roots": [local[r] for r in roots], "stats": stats, "insights": insights,
            "topUsed": [local[i] for i in top_used[:100]], "nodes": nodes}
     with open(out, "w", encoding="utf-8") as f:
         json.dump(doc, f, ensure_ascii=False, separators=(",", ":"))

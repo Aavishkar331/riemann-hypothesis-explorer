@@ -50,6 +50,8 @@ jobs:
           pip install numpy
           python3 explorer/indexer/index_lean.py rh/src data 4
           python3 explorer/indexer/exact_edges.py data deps.tsv.gz
+          python3 explorer/indexer/dominators.py data
+          python3 explorer/indexer/build_insights.py data
           python3 explorer/indexer/build_site_data.py data data.json "$(cat commit.txt)" 8000
 
       - uses: actions/upload-artifact@v4

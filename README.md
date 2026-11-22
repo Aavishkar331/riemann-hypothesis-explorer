@@ -6,6 +6,11 @@ The proof is about 164k files and 16.7M lines. This project indexes all of it an
 
 ## What you get
 
+- **Which results carry the proof**: a dominator analysis of the exact dependency graph. A result "owns" the declarations that exist only to prove it; the biggest owners form the proof's outline
+- **The main line** from the Riemann Hypothesis down to the core, with plain-English summaries (marked as written by Claude from the Lean statements)
+- **The 20 steps of the announcement**, each with the code whose names match its technical terms (name matching, unverified)
+- **Published mathematics inside the proof**: 446 classical results the proof states as propositions and proves (Local Langlands, Casselman–Wallach, Howe duality…), with how often each is used and how large its proof is
+
 - Search over declarations
 - A page for each declaration: its statement, kind, depth from the main theorems, how many declarations it uses and how many use it, and a link to the exact line on GitHub
 - An expandable "what it uses" tree, with cycles marked
@@ -57,6 +62,8 @@ python3 extractor/stream_extract.py \
   deps.tsv.gz --lean "$(which lean)" --extractor extractor/ExtractOleans.lean
 python3 indexer/index_lean.py ../riemann-hypothesis/src data 2     # source at commit 40e56bab
 python3 indexer/exact_edges.py data deps.tsv.gz
+python3 indexer/dominators.py data          # who owns which part of the proof
+python3 indexer/build_insights.py data      # outline, literature, steps, summaries
 python3 indexer/build_site_data.py data docs/data.json <full commit hash> 8000
 ```
 
@@ -67,6 +74,8 @@ python3 indexer/build_site_data.py data docs/data.json <full commit hash> 8000
 - `index_lean.py` finds every declaration, tracks `namespace`/`section`/`end` and `open`, and records full names, statements and source lines. `private` names are scoped to their file, as in Lean. Its name-based edges resolve identifiers through the namespaces in scope.
 - `ExtractOleans.lean` reads each compiled `.olean` and, for each constant, collects the constants used in its type and value. `exact_edges.py` then drops the ones from Mathlib and Lean core. Auto-generated helpers (`foo.proof_1`, `foo.match_1`, `foo._simp_1`, equation lemmas) are folded into `foo`.
 - `exact_edges.py` maps those names onto the index, folding a structure's `mk`, `rec` and fields into the structure, and adds declarations the parser cannot see (such as instances Lean named automatically).
+- `dominators.py` computes the dominator tree from the five main theorems (Cooper–Harvey–Kennedy). X owns Y when every chain of uses from the top to Y passes through X.
+- `build_insights.py` builds the outline, the list of published results with the theorems that prove them, the step-to-code matches and the summaries.
 - `build_site_data.py` runs a breadth-first search from the five main theorems and writes the nearest ~8,000 declarations plus the 300 most reused ones to `docs/data.json`.
 
 ## Limits

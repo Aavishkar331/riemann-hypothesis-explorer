@@ -45,6 +45,12 @@ def main(data, deps_path):
 
     def ensure(key, module):
         i = lookup(key)
+        # Only instances Lean named itself (`instFoo`) and private helpers are new
+        # declarations. Anything else unknown is an equation lemma Lean generated
+        # in this module for someone else's definition (e.g. Mathlib's), not ours.
+        last = key.rsplit("::", 1)[-1].rsplit(".", 1)[-1]
+        if i is None and not (last.startswith("inst") or "::" in key):
+            return None
         if i is None:
             i = name2id[key] = n + len(new_rows)
             memo.clear()
@@ -67,6 +73,8 @@ def main(data, deps_path):
     edges, lines = array.array("I"), 0
     for module, src, deps in rows():
         s = lookup(src)
+        if s is None:
+            continue
         out = set()
         for d in deps:
             t = lookup(d)
