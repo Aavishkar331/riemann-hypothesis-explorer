@@ -15,6 +15,11 @@ jobs:
   extract:
     runs-on: ubuntu-latest
     timeout-minutes: 350
+    # Keep the Lean toolchain and every cache on the big joined disk, not the small root disk.
+    env:
+      ELAN_HOME: ${{ github.workspace }}/.elan
+      XDG_CACHE_HOME: ${{ github.workspace }}/.cache
+      TMPDIR: ${{ github.workspace }}/.tmp
     steps:
       - name: Free disk space (joins the root and temp disks)
         uses: easimon/maximize-build-space@v10
@@ -33,6 +38,7 @@ jobs:
 
       - name: Clone the proof
         run: |
+          mkdir -p "$TMPDIR" "$XDG_CACHE_HOME"
           git clone https://github.com/leanprover-community/riemann-hypothesis rh
           git -C rh checkout "${{ inputs.rh_ref }}"
           git -C rh rev-parse HEAD > commit.txt
@@ -42,7 +48,7 @@ jobs:
         run: |
           curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -o "$RUNNER_TEMP/elan-init.sh"
           sh "$RUNNER_TEMP/elan-init.sh" -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          echo "$ELAN_HOME/bin" >> "$GITHUB_PATH"
 
       - name: Download the compiled proof (community cache)
         working-directory: rh
@@ -50,8 +56,8 @@ jobs:
           ulimit -n 65536
           lake exe cache get
           lake build --no-build
-          df -h .
-          du -sh .lake
+          df -h . /
+          du -sh .lake "$ELAN_HOME" "$XDG_CACHE_HOME"
 
       - name: Extract exact dependencies
         working-directory: rh
