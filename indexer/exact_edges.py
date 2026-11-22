@@ -22,7 +22,15 @@ def main(data, deps_path):
             n += 1
     new_rows = []
 
+    memo = {}
+
     def lookup(key):
+        if key in memo:
+            return memo[key]
+        r = memo[key] = lookup_uncached(key)
+        return r
+
+    def lookup_uncached(key):
         if key in name2id:
             return name2id[key]
         mod, sep, name = key.rpartition("::")
@@ -39,6 +47,7 @@ def main(data, deps_path):
         i = lookup(key)
         if i is None:
             i = name2id[key] = n + len(new_rows)
+            memo.clear()
             kind = "instance" if key.rsplit(".", 1)[-1].startswith("inst") else "def"
             new_rows.append((key, kind, module))
         return i

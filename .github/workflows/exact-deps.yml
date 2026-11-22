@@ -1,73 +1,49 @@
 name: Exact dependencies
 
 # Builds docs/data.json with exact edges taken from Lean's compiled proof terms.
-# Run it by hand from the Actions tab. It downloads the community build cache
-# (about 5 GB compressed), so it needs the extra disk space freed below.
+# The compiled proof (28.6 GB of .olean files) is streamed, never stored:
+# files are read in batches and deleted, so a free runner's disk is enough.
+# Run it by hand from the Actions tab.
 
 on:
   workflow_dispatch:
-    inputs:
-      rh_ref:
-        description: Commit or branch of leanprover-community/riemann-hypothesis
-        default: main
 
 jobs:
   extract:
     runs-on: ubuntu-latest
     timeout-minutes: 350
-    # Keep the Lean toolchain and every cache on the big joined disk, not the small root disk.
     env:
-      ELAN_HOME: ${{ github.workspace }}/.elan
-      XDG_CACHE_HOME: ${{ github.workspace }}/.cache
-      TMPDIR: ${{ github.workspace }}/.tmp
+      # Jack McCarthy's published build of the original submission (Lean 4.33.1)
+      OLEANS_URL: https://huggingface.co/datasets/JackMcCarthy/riemann-hypothesis-build/resolve/9036e64326acf4acfae159b96664e9708445c1d1/oleans.tar.zst
+      SUBMISSION: 40e56bab
     steps:
-      - name: Free disk space (joins the root and temp disks)
-        uses: easimon/maximize-build-space@v10
-        with:
-          root-reserve-mb: 6144
-          swap-size-mb: 8192
-          remove-dotnet: "true"
-          remove-android: "true"
-          remove-haskell: "true"
-          remove-codeql: "true"
-          remove-docker-images: "true"
-
       - uses: actions/checkout@v4
         with:
           path: explorer
 
-      - name: Clone the proof
+      - name: Get the proof source (original submission)
         run: |
-          mkdir -p "$TMPDIR" "$XDG_CACHE_HOME"
-          git clone https://github.com/leanprover-community/riemann-hypothesis rh
-          git -C rh checkout "${{ inputs.rh_ref }}"
+          git clone --filter=blob:none --no-checkout https://github.com/leanprover-community/riemann-hypothesis rh
+          git -C rh checkout "$SUBMISSION"
           git -C rh rev-parse HEAD > commit.txt
+          cat rh/lean-toolchain
           df -h .
 
-      - name: Install elan
+      - name: Install Lean 4.33.1
         run: |
-          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -o "$RUNNER_TEMP/elan-init.sh"
-          sh "$RUNNER_TEMP/elan-init.sh" -y --default-toolchain none
-          echo "$ELAN_HOME/bin" >> "$GITHUB_PATH"
+          curl -sSfL https://github.com/leanprover/lean4/releases/download/v4.33.1/lean-4.33.1-linux.tar.zst | tar --zstd -x
+          echo "$PWD/lean-4.33.1-linux/bin" >> "$GITHUB_PATH"
 
-      - name: Download the compiled proof (community cache)
-        working-directory: rh
-        run: |
-          ulimit -n 65536
-          lake exe cache get
-          lake build --no-build
-          df -h . /
-          du -sh .lake "$ELAN_HOME" "$XDG_CACHE_HOME"
+      - name: Check the extractor compiles
+        run: lean --run explorer/extractor/ExtractOleans.lean /dev/null /dev/null
 
-      - name: Extract exact dependencies
-        working-directory: rh
+      - name: Stream the compiled proof and extract dependencies
         run: |
-          ulimit -s unlimited
-          cp ../explorer/extractor/ExtractDeps.lean .
-          libs=BuildAid,CompanionTheory,Development,Formalism,GroundTheory,Lemmata,PositivityTheory,ReciprocityTheory,Supplements,Statements,Main
-          /usr/bin/time -v lake env lean --run ExtractDeps.lean ../deps.tsv Main "$libs"
-          gzip -9 ../deps.tsv
-          ls -la ../deps.tsv.gz
+          python3 explorer/extractor/stream_extract.py "$OLEANS_URL" deps.tsv.gz \
+            --lean "$(which lean)" --extractor explorer/extractor/ExtractOleans.lean \
+            --workdir work --batch 4000 --jobs 3
+          ls -la deps.tsv.gz
+          df -h .
 
       - name: Index the source and build the site data
         run: |
@@ -77,9 +53,11 @@ jobs:
           python3 explorer/indexer/build_site_data.py data data.json "$(cat commit.txt)" 8000
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: exact-deps
           path: |
             data.json
             deps.tsv.gz
+          if-no-files-found: warn
           retention-days: 30

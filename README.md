@@ -27,9 +27,9 @@ The page says which mode its data came from.
 2. Open **Actions → Exact dependencies → Run workflow**.
 3. When it finishes, download the `exact-deps` artifact and copy its `data.json` into `docs/`.
 
-The workflow frees disk space on the runner, installs Lean with elan, downloads the community build cache, runs the extractor, then runs the indexer and site builder. The extractor has been tested on a small project; the first full run is the real test. If the runner runs out of disk, memory or time, run the same steps on any Linux machine with about 100 GB free disk and 16 GB RAM.
+The compiled proof is about 28.6 GB compressed and well over 100 GB unpacked, more than a free runner's disk. So the workflow never unpacks it whole: `extractor/stream_extract.py` downloads the published `.olean` archive as a stream, unpacks a batch of files, runs `extractor/ExtractOleans.lean` on it and deletes it. `ExtractOleans.lean` reads each `.olean` on its own (`readModuleData`), so it needs neither Mathlib nor the rest of the build.
 
-The community cache includes builds from volunteer machines. That is fine for a map; it is not a proof check.
+The archive is Jack McCarthy's published build of the original submission (commit `40e56bab`, Lean 4.33.1), so the map describes the proof exactly as published.
 
 ## By-name mode locally
 
@@ -49,24 +49,23 @@ Needs Python 3.10+ and NumPy.
 
 ## Exact mode locally
 
-With the proof built (`lake exe cache get && lake build --no-build` inside the proof repo):
+Needs `zstd`, Lean 4.33.1 and about 10 GB of free disk:
 
 ```bash
-cd ../riemann-hypothesis
-cp ../rh-explorer/extractor/ExtractDeps.lean .
-ulimit -s unlimited
-lake env lean --run ExtractDeps.lean ../deps.tsv Main \
-  BuildAid,CompanionTheory,Development,Formalism,GroundTheory,Lemmata,PositivityTheory,ReciprocityTheory,Supplements,Statements,Main
-cd ../rh-explorer
-python3 indexer/index_lean.py ../riemann-hypothesis/src data 2
-python3 indexer/exact_edges.py data ../deps.tsv
-python3 indexer/build_site_data.py data docs/data.json $(git -C ../riemann-hypothesis rev-parse HEAD) 8000
+python3 extractor/stream_extract.py \
+  https://huggingface.co/datasets/JackMcCarthy/riemann-hypothesis-build/resolve/9036e64326acf4acfae159b96664e9708445c1d1/oleans.tar.zst \
+  deps.tsv.gz --lean "$(which lean)" --extractor extractor/ExtractOleans.lean
+python3 indexer/index_lean.py ../riemann-hypothesis/src data 2     # source at commit 40e56bab
+python3 indexer/exact_edges.py data deps.tsv.gz
+python3 indexer/build_site_data.py data docs/data.json <full commit hash> 8000
 ```
+
+`extractor/ExtractDeps.lean` does the same from a fully built project (`lake env lean --run ...`) if you have one.
 
 ## How it works
 
 - `index_lean.py` finds every declaration, tracks `namespace`/`section`/`end` and `open`, and records full names, statements and source lines. `private` names are scoped to their file, as in Lean. Its name-based edges resolve identifiers through the namespaces in scope.
-- `ExtractDeps.lean` imports the compiled environment and, for each project constant, collects the project constants used in its type and value. Auto-generated helpers (`foo.proof_1`, `foo.match_1`, `foo._simp_1`, equation lemmas) are folded into `foo`.
+- `ExtractOleans.lean` reads each compiled `.olean` and, for each constant, collects the constants used in its type and value. `exact_edges.py` then drops the ones from Mathlib and Lean core. Auto-generated helpers (`foo.proof_1`, `foo.match_1`, `foo._simp_1`, equation lemmas) are folded into `foo`.
 - `exact_edges.py` maps those names onto the index, folding a structure's `mk`, `rec` and fields into the structure, and adds declarations the parser cannot see (such as instances Lean named automatically).
 - `build_site_data.py` runs a breadth-first search from the five main theorems and writes the nearest ~8,000 declarations plus the 300 most reused ones to `docs/data.json`.
 
