@@ -1,0 +1,79 @@
+name: Exact dependencies
+
+# Builds docs/data.json with exact edges taken from Lean's compiled proof terms.
+# Run it by hand from the Actions tab. It downloads the community build cache
+# (about 5 GB compressed), so it needs the extra disk space freed below.
+
+on:
+  workflow_dispatch:
+    inputs:
+      rh_ref:
+        description: Commit or branch of leanprover-community/riemann-hypothesis
+        default: main
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Free disk space (joins the root and temp disks)
+        uses: easimon/maximize-build-space@v10
+        with:
+          root-reserve-mb: 6144
+          swap-size-mb: 8192
+          remove-dotnet: "true"
+          remove-android: "true"
+          remove-haskell: "true"
+          remove-codeql: "true"
+          remove-docker-images: "true"
+
+      - uses: actions/checkout@v4
+        with:
+          path: explorer
+
+      - name: Clone the proof
+        run: |
+          git clone https://github.com/leanprover-community/riemann-hypothesis rh
+          git -C rh checkout "${{ inputs.rh_ref }}"
+          git -C rh rev-parse HEAD > commit.txt
+          df -h .
+
+      - name: Install elan
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -o "$RUNNER_TEMP/elan-init.sh"
+          sh "$RUNNER_TEMP/elan-init.sh" -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Download the compiled proof (community cache)
+        working-directory: rh
+        run: |
+          ulimit -n 65536
+          lake exe cache get
+          lake build --no-build
+          df -h .
+          du -sh .lake
+
+      - name: Extract exact dependencies
+        working-directory: rh
+        run: |
+          ulimit -s unlimited
+          cp ../explorer/extractor/ExtractDeps.lean .
+          libs=BuildAid,CompanionTheory,Development,Formalism,GroundTheory,Lemmata,PositivityTheory,ReciprocityTheory,Supplements,Statements,Main
+          /usr/bin/time -v lake env lean --run ExtractDeps.lean ../deps.tsv Main "$libs"
+          gzip -9 ../deps.tsv
+          ls -la ../deps.tsv.gz
+
+      - name: Index the source and build the site data
+        run: |
+          pip install numpy
+          python3 explorer/indexer/index_lean.py rh/src data 4
+          python3 explorer/indexer/exact_edges.py data deps.tsv.gz
+          python3 explorer/indexer/build_site_data.py data data.json "$(cat commit.txt)" 8000
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exact-deps
+          path: |
+            data.json
+            deps.tsv.gz
+          retention-days: 30

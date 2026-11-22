@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RH proof explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a calm survey office, precise and quiet; numbers first.
+   IDEA: an atlas plate of a huge territory, mapped from the five summit theorems down.
+   PICTURE: the live dependency tree itself, then a depth profile like a sounding chart.
+   COLOUR and TYPE: deep sea ground, sky ink, white text, one signal pink; Hanken Grotesk.
+   LAYOUT: three strips on one axis: explorer (tallest), depth profile, territory by library. */
+:root{color-scheme:dark;--bg:#0a2540;--bg2:#0f2f50;--bg3:#143a61;--ink:#ffffff;--mut:#a9c3dc;--sky:#8fd3ff;--pink:#ff5c8a;--line:#22486f}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Hanken Grotesk",system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(24px,3.5vw,56px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+h1{font-weight:300;font-size:clamp(32px,5vw,52px);line-height:1.05;margin:0 0 10px;text-wrap:balance}
+h2{font-weight:400;font-size:24px;line-height:1.2;margin:0 0 6px}
+.sub{color:var(--mut);max-width:70ch;margin:0}
+.figs{display:flex;flex-wrap:wrap;gap:12px 36px;margin:22px 0 0}
+.figs div{display:flex;flex-direction:column}
+.figs b{font-weight:300;font-size:clamp(24px,3vw,34px);color:var(--sky);font-variant-numeric:tabular-nums;white-space:nowrap}
+.figs span{color:var(--mut);font-size:14px}
+.ex{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:20px;margin-top:28px}
+.panel{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px}
+input[type=search]{width:100%;font:16px "Hanken Grotesk",sans-serif;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-height:44px}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+.lbl{font-size:13px;color:var(--mut);margin:16px 0 6px}
+.list{list-style:none;margin:0;padding:0;max-height:330px;overflow-y:auto}
+.list button{all:unset;cursor:pointer;display:block;width:100%;padding:6px 8px;border-radius:6px;font-size:14px;overflow-wrap:anywhere;box-sizing:border-box}
+.list button:hover,.list button[aria-current=true]{background:var(--bg3)}
+.list small{color:var(--mut);margin-left:6px;white-space:nowrap}
+.crumb{display:flex;flex-wrap:wrap;gap:4px 6px;font-size:13px;color:var(--mut);margin-bottom:10px}
+.crumb button{all:unset;cursor:pointer;color:var(--sky);overflow-wrap:anywhere}
+.crumb button:hover{text-decoration:underline}
+.name{font-size:clamp(20px,2.4vw,26px);font-weight:500;line-height:1.2;overflow-wrap:anywhere;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--mut);margin:8px 0 12px}
+.kind{color:var(--bg);background:var(--sky);border-radius:4px;padding:0 7px;font-size:13px;font-weight:500}
+.kind.priv{background:var(--pink)}
+pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px;margin:0;font:13px/1.6 "JetBrains Mono",ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow-y:auto}
+a{color:var(--sky)}
+.tree{list-style:none;padding-left:0;margin:6px 0 0;font-size:14px}
+.tree ul{list-style:none;padding-left:18px;margin:0;border-left:1px solid var(--line)}
+.tree li{margin:1px 0}
+.row{display:flex;align-items:baseline;gap:6px}
+.tg{all:unset;cursor:pointer;width:18px;text-align:center;color:var(--sky);flex:none}
+.tg[disabled]{color:var(--line);cursor:default}
+.nm{all:unset;cursor:pointer;overflow-wrap:anywhere}
+.nm:hover{color:var(--sky)}
+.row small{color:var(--mut);white-space:nowrap}
+.more{color:var(--mut);font-size:13px;padding-left:24px}
+.cyc{color:var(--pink);font-size:12px}
+.fig{position:relative;height:260px;margin-top:16px}
+.fig>svg{position:absolute;inset:0;width:100%;height:100%}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;padding:4px 8px;border-radius:6px;white-space:nowrap;display:none}
+.libs{display:grid;gap:10px;margin-top:18px}
+.lib{display:grid;grid-template-columns:minmax(0,170px) minmax(0,1fr) 120px;gap:12px;align-items:center;font-size:14px}
+.bar{height:14px;background:var(--bg3);border-radius:0 4px 4px 0;position:relative}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--sky);border-radius:0 4px 4px 0}
+.bar em{position:absolute;inset:0 auto 0 0;background:var(--pink);border-radius:0 4px 4px 0}
+.lib span:last-child{text-align:right;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
+.key{display:flex;gap:18px;font-size:13px;color:var(--mut);margin-top:10px}
+.key i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.note{color:var(--mut);font-size:14px;max-width:80ch}
+.note li{margin:4px 0}
+.loading{color:var(--mut);padding:30px 0}
+@media(max-width:760px){.ex{grid-template-columns:minmax(0,1fr)}.lib{grid-template-columns:minmax(0,1fr) 110px}.lib .bar{grid-column:1/-1;grid-row:2}}
+@media(prefers-reduced-motion:no-preference){.tree ul{animation:in .18s ease-out}@keyframes in{from{opacity:0;transform:translateY(-3px)}}}
+</style>
+</head>
+<body>
+<section class="band"><div class="wrap">
+  <h1>Walking the 17-million-line proof of the Riemann Hypothesis</h1>
+  <p class="sub">A static map of the Lean 4 proof of RH and GRH for Dirichlet L-functions announced by Levent Alpöge with Claude on 20 November 2026. Start at the five main theorems and expand what each one uses.</p>
+  <div class="figs" id="figs"></div>
+  <div class="ex">
+    <div class="panel">
+      <input type="search" id="q" placeholder="Search declarations" aria-label="Search declarations" autocomplete="off">
+      <div class="lbl" id="listLbl">Main theorems</div>
+      <ul class="list" id="list"></ul>
+      <div class="lbl">Most reused declarations</div>
+      <ul class="list" id="top"></ul>
+    </div>
+    <div class="panel" id="detail"><div class="loading">Loading the index…</div></div>
+  </div>
+</div></section>
+
+<section class="band" style="background:var(--bg2)"><div class="wrap">
+  <h2>How deep the proof goes</h2>
+  <p class="sub" id="depthSub">Declarations at each step away from the main theorems.</p>
+  <div class="fig" id="depthFig"><svg id="depthSvg" role="img" aria-label="Bar chart of declarations by depth"></svg><div class="tip" id="tip"></div></div>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <h2>Where the territory lies</h2>
+  <p class="sub">Lines of Lean per library, and how much of each library the main theorems reach by name.</p>
+  <div class="key"><span><i style="background:var(--sky)"></i>Lines of code</span><span><i style="background:var(--pink)"></i>Share of declarations reached</span></div>
+  <div class="libs" id="libs"></div>
+  <h2 style="margin-top:40px">How this map was made</h2>
+  <ul class="note">
+    <li>Every <code>.lean</code> file was parsed as text to list declarations with their statements and source lines. Private ones are kept per file, as Lean does.</li>
+    <li id="edgeNote"></li>
+    <li>The browser loads the roughly 8,000 declarations nearest the main theorems plus the most reused ones. The full index of about a million declarations is rebuilt locally by the indexer in the repository.</li>
+    <li>This shows structure, not meaning. It is not a proof check: that was done by Lean's kernel and independent checkers.</li>
+  </ul>
+  <p class="note" id="src"></p>
+</div></section>
+
+<script>
+{
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = n => n.toLocaleString("en-US");
+let D, N, parent, byName;
+
+fetch("data.json").then(r => r.json()).then(d => { D = d; N = d.nodes; init(); })
+  .catch(() => { $("detail").innerHTML = '<p class="loading">Could not load data.json. Serve this folder over HTTP.</p>'; });
+
+function init() {
+  const s = D.stats, exact = s.mode === "exact";
+  $("edgeNote").innerHTML = exact
+    ? "Edges are exact. They come from Lean's compiled proof terms: a declaration depends on every constant that appears in its type or proof, including the type class instances, <code>simp</code> lemmas and automation Lean filled in. Auto-generated helpers (<code>proof_1</code>, <code>match_1</code>, equation lemmas, a structure's <code>mk</code> and fields) are folded into the declaration they belong to."
+    : "Edges here are approximate: a declaration's statement or proof mentions another by name, resolved through its namespaces and <code>open</code> lines. Uses Lean finds on its own (instances, <code>simp</code> sets, automation) are missing, so \"reached\" is a lower bound. Run the exact extractor in the repository to replace them with Lean's real dependencies.";
+  $("figs").innerHTML = [
+    [fmt(s.files), "Lean files"], [(s.lines / 1e6).toFixed(1) + "M", "lines"],
+    [fmt(s.decls), "declarations"], [fmt(s.reachable), exact ? "used by the main theorems" : "reached by name from the main theorems"],
+    [s.maxDepth, "levels deep"]
+  ].map(([b, t]) => `<div><b>${b}</b><span>${t}</span></div>`).join("");
+  byName = new Map(N.map((n, i) => [n.n, i]));
+  parent = new Int32Array(N.length).fill(-1);
+  const seen = new Uint8Array(N.length), q = [...D.roots];
+  D.roots.forEach(r => seen[r] = 1);
+  for (let h = 0; h < q.length; h++) for (const c of N[q[h]].c) if (!seen[c]) { seen[c] = 1; parent[c] = q[h]; q.push(c); }
+  showList(D.roots, "Main theorems");
+  $("top").innerHTML = D.topUsed.slice(0, 40).map(i => item(i, fmt(N[i].u) + " uses")).join("");
+  $("q").addEventListener("input", onSearch);
+  document.addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (b && !b.classList.contains("tg")) go(+b.dataset.i); });
+  window.addEventListener("hashchange", fromHash);
+  libs(); depth(); new ResizeObserver(depth).observe($("depthFig"));
+  $("src").innerHTML = `Source: <a href="https://github.com/leanprover-community/riemann-hypothesis/tree/${D.commit}">leanprover-community/riemann-hypothesis</a> at commit <code>${D.commit.slice(0, 8)}</code>.`;
+  fromHash();
+}
+
+const item = (i, extra) => `<li><button data-i="${i}">${esc(N[i].n)}<small>${extra}</small></button></li>`;
+function showList(ids, label) { $("listLbl").textContent = label; $("list").innerHTML = ids.map(i => item(i, N[i].k)).join("") || '<li class="more">No match among loaded declarations</li>'; }
+function onSearch() {
+  const v = $("q").value.trim().toLowerCase();
+  if (!v) return showList(D.roots, "Main theorems");
+  const hits = [];
+  for (let i = 0; i < N.length && hits.length < 60; i++) if (N[i].n.toLowerCase().includes(v)) hits.push(i);
+  showList(hits, `${hits.length}${hits.length === 60 ? "+" : ""} matches`);
+}
+function fromHash() { const m = location.hash.match(/^#n(\d+)$/); show(m && +m[1] < N.length ? +m[1] : D.roots[0]); }
+function go(i) { if (location.hash !== "#n" + i) location.hash = "n" + i; else show(i); }
+const gh = n => `https://github.com/leanprover-community/riemann-hypothesis/blob/${D.commit}/src/${n.m.replace(/\./g, "/")}.lean${n.l ? "#L" + n.l : ""}`;
+
+function show(i) {
+  const n = N[i], path = [];
+  for (let p = i; p >= 0; p = parent[p]) path.unshift(p);
+  document.querySelectorAll(".list button").forEach(b => b.setAttribute("aria-current", +b.dataset.i === i));
+  $("detail").innerHTML = `
+    <div class="crumb">${parent[i] < 0 && n.d !== 0 ? "<span>Not linked to the main theorems among loaded declarations</span>" :
+      path.map((p, k) => k < path.length - 1 ? `<button data-i="${p}">${esc(short(N[p].n))}</button><span>›</span>` : "").join("")}</div>
+    <h3 class="name">${esc(n.n)}</h3>
+    <div class="meta"><span class="kind ${n.p ? "priv" : ""}">${n.p ? "private " : ""}${n.k}</span>
+      <span>depth ${n.d >= 0 ? n.d : "–"}</span><span>uses ${fmt(n.nc)}</span><span>used by ${fmt(n.u)}</span>
+      <a href="${gh(n)}" target="_blank" rel="noopener">${esc(n.m)}${n.l ? ":" + n.l : ""}</a></div>
+    <pre>${esc(n.s || (n.l ? "(no statement parsed)" : "(generated by Lean; no source line)"))}</pre>
+    <div class="lbl">What it uses</div>
+    <ul class="tree" id="tree"></ul>`;
+  $("tree").innerHTML = kids(i, new Set([i]));
+  $("tree").addEventListener("click", onToggle);
+}
+const short = s => s.length > 32 ? "…" + s.slice(-30) : s;
+function kids(i, anc) {
+  const n = N[i], cs = [...new Set(n.c)].sort((a, b) => N[b].u - N[a].u);
+  const rows = cs.map(c => {
+    const has = N[c].c.length > 0, cyc = anc.has(c);
+    return `<li data-a="${[...anc].join(",")}"><div class="row"><button class="tg" data-i="${c}" aria-expanded="false" aria-label="Expand" ${has && !cyc ? "" : "disabled"}>${has && !cyc ? "+" : "·"}</button>
+      <button class="nm" data-i="${c}">${esc(N[c].n)}</button><small>${N[c].k} · used by ${fmt(N[c].u)}</small>${cyc ? '<span class="cyc">cycle</span>' : ""}</div></li>`;
+  }).join("");
+  const hidden = n.nc - cs.length;
+  return rows + (hidden > 0 ? `<li class="more">+ ${fmt(hidden)} more not loaded in the browser</li>` : "") + (n.nc === 0 ? '<li class="more">Uses nothing else from the proof (only Mathlib or Lean core)</li>' : "");
+}
+function onToggle(e) {
+  const t = e.target.closest(".tg"); if (!t || t.disabled) return;
+  e.stopPropagation();
+  const li = t.closest("li"), open = t.getAttribute("aria-expanded") === "true";
+  if (open) { li.querySelector("ul")?.remove(); t.textContent = "+"; t.setAttribute("aria-expanded", "false"); return; }
+  const anc = new Set(li.dataset.a.split(",").map(Number)); anc.add(+t.dataset.i);
+  const ul = document.createElement("ul"); ul.innerHTML = kids(+t.dataset.i, anc); li.appendChild(ul);
+  t.textContent = "−"; t.setAttribute("aria-expanded", "true");
+}
+
+function libs() {
+  const L = D.stats.libs.filter(l => l.decls > 0 && l.lines > 1000), max = Math.max(...L.map(l => l.lines));
+  $("libs").innerHTML = L.map(l => {
+    const w = 100 * l.lines / max, r = l.reach / l.decls;
+    return `<div class="lib"><span>${esc(l.a)}</span><div class="bar" title="${fmt(l.lines)} lines, ${fmt(l.reach)} of ${fmt(l.decls)} declarations reached"><i style="width:${w}%"></i><em style="width:${w * r}%"></em></div>
+      <span>${(l.lines / 1e6).toFixed(2)}M · ${(100 * r).toFixed(0)}%</span></div>`;
+  }).join("");
+}
+
+function depth() {
+  if (!D) return;
+  const s = $("depthSvg"), W = s.clientWidth, H = s.clientHeight, h = D.stats.depthHist;
+  const m = { l: 52, r: 8, t: 10, b: 28 }, iw = W - m.l - m.r, ih = H - m.t - m.b, max = Math.max(...h);
+  const bw = iw / h.length, y = v => m.t + ih - ih * v / max, small = W < 520;
+  const peak = h.indexOf(max);
+  $("depthSub").textContent = `Declarations at each step away from the main theorems. The widest level is depth ${peak}, with ${fmt(max)}.`;
+  const ticks = [0, max / 2, max].map(v => `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/>
+    <text x="${m.l - 8}" y="${y(v) + 4}" fill="var(--mut)" font-size="12" text-anchor="end">${fmt(Math.round(v))}</text>`).join("");
+  const bars = h.map((v, i) => { const bh = Math.max(1, ih * v / max), x = m.l + i * bw;
+    return `<rect x="${x + 1}" y="${m.t + ih - bh}" width="${Math.max(1, bw - 2)}" height="${bh}" rx="${Math.min(4, bw / 3)}" fill="${i === peak ? "var(--pink)" : "var(--sky)"}"/>
+      <rect class="hit" data-d="${i}" x="${x}" y="${m.t}" width="${bw}" height="${ih}" fill="transparent"/>`; }).join("");
+  const step = small ? 10 : 5;
+  const xl = h.map((_, i) => i % step === 0 ? `<text x="${m.l + i * bw + bw / 2}" y="${H - 8}" fill="var(--mut)" font-size="12" text-anchor="middle">${i}</text>` : "").join("");
+  s.innerHTML = ticks + bars + xl;
+  s.onmousemove = e => { const r = e.target.closest(".hit"), tip = $("tip");
+    if (!r) { tip.style.display = "none"; return; }
+    const d = +r.dataset.d; tip.textContent = `Depth ${d}: ${fmt(h[d])} declarations`; tip.style.display = "block";
+    const bx = s.getBoundingClientRect(); tip.style.left = Math.min(e.clientX - bx.left + 10, W - 190) + "px"; tip.style.top = (e.clientY - bx.top - 30) + "px"; };
+  s.onmouseleave = () => $("tip").style.display = "none";
+}
+}
+</script>
+</body>
+</html>
